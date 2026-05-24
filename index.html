@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ATLAS GPA — Academic Navigator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/*══════════════════════════════════════════
+  RESET & ROOT
+══════════════════════════════════════════*/
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --space:    #030609;
+  --space-2:  #060d18;
+  --card:     #080f1e;
+  --card-hi:  #0c1628;
+  --card-2:   #0a1424;
+  --blue:     #4AB4FF;
+  --blue-2:   #267FCC;
+  --blue-3:   #0d3060;
+  --blue-glow:rgba(74,180,255,.18);
+  --cyan:     #52D8F0;
+  --purple:   #9B7FF4;
+  --amber:    #C9933A;
+  --green:    #4DC994;
+  --red:      #E05A5A;
+  --steel:    #7BBAFF;
+  --star:     #D8EAFF;
+  --text:     #B8D4F0;
+  --muted:    #5A7A9A;
+  --faint:    #2A3D55;
+  --border:   rgba(74,180,255,.1);
+  --border-hi:rgba(74,180,255,.28);
+  --pill:     100px;
+  --r:        12px;
+  --r-sm:     8px;
+  /* course type accent colors */
+  --c-regular:  var(--blue);
+  --c-honors:   var(--cyan);
+  --c-ap:       var(--purple);
+  --c-de:       var(--amber);
+  --c-ib:       var(--green);
+}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--space);
+  color:var(--text);
+  font-family:'Outfit',sans-serif;
+  font-size:15px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+  min-height:100vh;
+}
+/*══════════════════════════════════════════
+  FIXED LAYERS
+══════════════════════════════════════════*/
+#cvs{position:fixed;inset:0;z-index:2;pointer-events:none;}
+.nebula-bg{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:
+    radial-gradient(ellipse 60% 40% at 5% 10%, rgba(36,100,200,.09) 0%,transparent 65%),
+    radial-gradient(ellipse 45% 35% at 95% 85%, rgba(74,180,255,.06) 0%,transparent 60%),
+    radial-gradient(ellipse 35% 30% at 50% 50%, rgba(8,15,30,.5) 0%,transparent 80%);
+}
+.wrap{position:relative;z-index:10;max-width:980px;margin:0 auto;padding:0 clamp(1rem,4vw,2.5rem);}
+
+/*══════════════════════════════════════════
+  HEADER
+══════════════════════════════════════════*/
+header{
+  position:sticky;top:0;z-index:100;
+  background:rgba(3,6,9,.92);backdrop-filter:blur(20px);
+  border-bottom:.5px solid var(--border);
+  padding:0 clamp(1rem,4vw,2.5rem);
+}
+.h-inner{
+  max-width:980px;margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  height:60px;
+}
+.logo{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;}
+.logo-mark{width:34px;height:34px;flex-shrink:0;}
+.logo-name{font-family:'Cinzel',serif;font-size:20px;font-weight:700;letter-spacing:.2em;color:var(--star);text-shadow:0 0 24px rgba(74,180,255,.5);line-height:1;}
+.logo-sub{display:block;font-family:'Outfit',sans-serif;font-size:8px;letter-spacing:.28em;text-transform:uppercase;color:var(--blue);margin-top:3px;}
+.h-actions{display:flex;align-items:center;gap:10px;}
+.btn-ghost{
+  height:32px;padding:0 14px;border-radius:var(--pill);
+  border:.5px solid var(--border-hi);background:transparent;
+  font-family:'Outfit',sans-serif;font-size:11.5px;letter-spacing:.06em;
+  color:var(--muted);cursor:pointer;transition:all .18s;
+  display:flex;align-items:center;gap:6px;
+}
+.btn-ghost:hover{border-color:var(--blue);color:var(--blue);}
+.btn-primary{
+  height:32px;padding:0 16px;border-radius:var(--pill);
+  border:.5px solid var(--blue);background:var(--blue-2);
+  font-family:'Outfit',sans-serif;font-size:11.5px;letter-spacing:.06em;
+  color:var(--star);cursor:pointer;transition:all .18s;
+  display:flex;align-items:center;gap:6px;
+}
+.btn-primary:hover{background:var(--blue);box-shadow:0 0 18px rgba(74,180,255,.3);}
+
+/*══════════════════════════════════════════
+  HERO
+══════════════════════════════════════════*/
+.hero{
+  text-align:center;
+  padding:clamp(3.5rem,8vw,5.5rem) 0 clamp(2rem,4vw,3rem);
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  border:.5px solid var(--border-hi);background:rgba(74,180,255,.05);
+  color:var(--blue);font-size:10px;letter-spacing:.24em;text-transform:uppercase;
+  padding:6px 20px;border-radius:var(--pill);margin-bottom:1.8rem;
+  animation:fadeUp .6s .05s ease both;
+}
+.badge-dot{width:5px;height:5px;border-radius:50%;background:var(--blue);box-shadow:0 0 7px var(--blue);animation:pulse 2.4s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.6)}}
+.hero-title{
+  font-family:'Cinzel',serif;font-size:clamp(2.2rem,6vw,4rem);font-weight:900;
+  letter-spacing:.25em;line-height:1;color:var(--star);
+  text-shadow:0 0 50px rgba(74,180,255,.45),0 0 120px rgba(74,180,255,.12);
+  margin-bottom:.6rem;animation:fadeUp .7s .15s ease both;
+}
+.hero-rule{width:80px;height:.5px;margin:.8rem auto 1.4rem;background:linear-gradient(90deg,transparent,var(--blue),transparent);animation:fadeUp .6s .22s ease both;}
+.hero-tag{
+  font-family:'Crimson Pro',serif;font-style:italic;
+  font-size:clamp(1rem,2vw,1.2rem);color:var(--muted);font-weight:300;
+  max-width:420px;margin:0 auto .4rem;animation:fadeUp .6s .28s ease both;
+}
+.hero-sub{font-size:12px;color:var(--faint);letter-spacing:.08em;animation:fadeUp .6s .35s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/*══════════════════════════════════════════
+  SCHOOL SELECTOR
+══════════════════════════════════════════*/
+.school-bar{
+  background:var(--card);border:.5px solid var(--border);border-radius:var(--r);
+  padding:1rem 1.4rem;margin-bottom:1.5rem;
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+  animation:fadeUp .5s .4s ease both;
+}
+.school-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);}
+.school-select-wrap{display:flex;align-items:center;gap:10px;}
+.school-name{font-family:'Cinzel',serif;font-size:.95rem;font-weight:600;color:var(--star);letter-spacing:.05em;}
+.school-change{
+  font-size:10.5px;color:var(--blue);background:none;border:none;cursor:pointer;
+  text-decoration:underline;text-decoration-color:rgba(74,180,255,.35);
+  font-family:'Outfit',sans-serif;letter-spacing:.04em;padding:0;
+}
+.school-change:hover{color:var(--steel);}
+/* school modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(3,6,9,.85);backdrop-filter:blur(8px);
+  z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem;
+  opacity:0;pointer-events:none;transition:opacity .25s;
+}
+.modal-overlay.open{opacity:1;pointer-events:auto;}
+.modal{
+  background:var(--card-hi);border:.5px solid var(--border-hi);border-radius:14px;
+  padding:2rem;width:100%;max-width:480px;
+  transform:translateY(16px);transition:transform .25s;
+}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-title{font-family:'Cinzel',serif;font-size:1rem;font-weight:600;color:var(--star);letter-spacing:.1em;margin-bottom:1.2rem;}
+.school-list{display:flex;flex-direction:column;gap:8px;margin-bottom:1.2rem;}
+.school-opt{
+  display:flex;align-items:center;gap:12px;padding:.8rem 1rem;
+  border-radius:var(--r-sm);border:.5px solid var(--border);
+  background:transparent;cursor:pointer;transition:all .18s;text-align:left;
+  font-family:'Outfit',sans-serif;
+}
+.school-opt:hover{border-color:var(--border-hi);background:rgba(74,180,255,.04);}
+.school-opt.selected{border-color:var(--blue);background:rgba(74,180,255,.07);}
+.so-name{font-size:.9rem;color:var(--text);font-weight:500;}
+.so-sub{font-size:11px;color:var(--faint);}
+.so-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;margin-left:auto;}
+.school-opt.selected .so-dot{background:var(--blue);box-shadow:0 0 6px var(--blue);}
+.modal-close{
+  width:100%;padding:.75rem;border-radius:var(--r-sm);
+  border:.5px solid var(--border);background:transparent;
+  font-family:'Outfit',sans-serif;font-size:13px;color:var(--muted);
+  cursor:pointer;transition:all .18s;
+}
+.modal-close:hover{border-color:var(--border-hi);color:var(--text);}
+/* custom school input */
+.custom-school-row{display:flex;gap:8px;margin-bottom:8px;}
+.inp-base{
+  background:#132030;border:.5px solid rgba(74,180,255,.32);border-radius:var(--r-sm);
+  color:#D8EAFF;font-family:'Outfit',sans-serif;font-size:13px;
+  padding:.6rem .9rem;outline:none;transition:border-color .2s,box-shadow .2s;width:100%;
+}
+.inp-base::placeholder{color:#5E86A8;}
+.inp-base:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(74,180,255,.1);background:#162536;}
+
+/*══════════════════════════════════════════
+  SEMESTER TABS
+══════════════════════════════════════════*/
+.sem-tabs-wrap{
+  display:flex;align-items:center;gap:8px;margin-bottom:1.2rem;flex-wrap:wrap;
+  animation:fadeUp .5s .45s ease both;
+}
+.sem-tab{
+  height:34px;padding:0 16px;border-radius:var(--pill);
+  border:.5px solid var(--border-hi);background:transparent;
+  font-family:'Outfit',sans-serif;font-size:12px;letter-spacing:.06em;
+  color:var(--muted);cursor:pointer;transition:all .18s;
+  display:flex;align-items:center;gap:6px;white-space:nowrap;
+}
+.sem-tab:hover{border-color:var(--blue);color:var(--blue);}
+.sem-tab.active{background:var(--blue-2);color:var(--star);border-color:var(--blue);box-shadow:0 0 14px rgba(74,180,255,.18);}
+.sem-tab-add{
+  height:34px;width:34px;border-radius:50%;
+  border:.5px solid var(--border-hi);background:transparent;
+  color:var(--muted);cursor:pointer;transition:all .18s;
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+}
+.sem-tab-add:hover{border-color:var(--green);color:var(--green);}
+.sem-tab-del{
+  width:18px;height:18px;border-radius:50%;border:none;background:rgba(224,90,90,.15);
+  color:var(--red);cursor:pointer;font-size:10px;margin-left:2px;
+  display:flex;align-items:center;justify-content:center;transition:background .18s;
+}
+.sem-tab-del:hover{background:rgba(224,90,90,.3);}
+.sem-tab-rename{
+  font-size:10px;color:var(--faint);margin-left:1px;cursor:pointer;
+  transition:color .15s;line-height:1;padding:1px 2px;border-radius:3px;
+}
+.sem-tab:hover .sem-tab-rename{color:var(--muted);}
+.sem-tab-rename:hover{color:var(--blue)!important;}
+.sem-tab-name{pointer-events:none;}
+
+/*══════════════════════════════════════════
+  INPUT SECTION
+══════════════════════════════════════════*/
+.section-head{
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:1rem;padding-bottom:.8rem;
+  border-bottom:.5px solid var(--border);
+}
+.sh-dot{width:8px;height:8px;border-radius:50%;box-shadow:0 0 7px currentColor;flex-shrink:0;}
+.sh-title{font-family:'Cinzel',serif;font-size:.95rem;font-weight:600;color:var(--star);letter-spacing:.1em;}
+.sh-sub{font-size:11px;color:var(--faint);margin-left:6px;font-style:italic;}
+
+/* course type color dots */
+.type-regular{color:var(--c-regular);}
+.type-honors {color:var(--c-honors);}
+.type-ap     {color:var(--c-ap);}
+.type-de     {color:var(--c-de);}
+.type-ib     {color:var(--c-ib);}
+
+/* table header */
+.courses-header{
+  display:grid;
+  grid-template-columns:2fr 1fr 80px 140px 36px;
+  gap:8px;padding:0 .5rem .6rem;
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
+}
+@media(max-width:600px){
+  .courses-header{display:none;}
+  .course-row{grid-template-columns:1fr 1fr!important;}
+}
+
+/* course row */
+.course-row{
+  display:grid;
+  grid-template-columns:2fr 1fr 80px 140px 36px;
+  gap:8px;align-items:center;
+  background:#0e1e35;border:.5px solid rgba(74,180,255,.22);border-radius:var(--r);
+  padding:.7rem .8rem;margin-bottom:8px;
+  transition:border-color .2s,box-shadow .2s;
+  animation:fadeUp .3s ease both;
+}
+.course-row:hover{border-color:rgba(74,180,255,.42);background:#111f38;}
+.course-row.has-grade{border-left:2px solid var(--row-accent,var(--border));}
+
+select.inp-base{cursor:pointer;}
+select.inp-base option{background:#0c1628;color:var(--text);}
+
+.btn-remove{
+  width:32px;height:32px;border-radius:50%;border:none;
+  background:rgba(224,90,90,.1);color:var(--red);
+  cursor:pointer;font-size:16px;transition:background .18s;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.btn-remove:hover{background:rgba(224,90,90,.25);}
+
+.add-row-btn{
+  width:100%;padding:.7rem;border-radius:var(--r);
+  border:.5px dashed var(--border-hi);background:transparent;
+  font-family:'Outfit',sans-serif;font-size:12.5px;letter-spacing:.06em;
+  color:var(--muted);cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;
+}
+.add-row-btn:hover{border-color:var(--green);color:var(--green);background:rgba(77,201,148,.04);}
+
+/*══════════════════════════════════════════
+  RESULTS PANEL
+══════════════════════════════════════════*/
+.results-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  margin-bottom:12px;
+}
+@media(max-width:500px){.results-grid{grid-template-columns:1fr;}}
+
+.result-card{
+  background:var(--card);border:.5px solid var(--border);border-radius:var(--r);
+  padding:1.2rem 1.4rem;position:relative;overflow:hidden;
+  transition:border-color .2s;
+}
+.result-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--rc-col,var(--blue)),transparent);
+}
+.result-card.primary{border-color:var(--border-hi);box-shadow:0 0 28px rgba(74,180,255,.08);}
+.rc-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-bottom:.5rem;}
+.rc-value{
+  font-family:'Cinzel',serif;font-size:2.6rem;font-weight:700;
+  color:var(--star);line-height:1;letter-spacing:.02em;
+}
+.rc-value span{font-size:1rem;color:var(--muted);font-family:'Outfit',sans-serif;font-weight:300;}
+.rc-sub{font-size:11px;color:var(--faint);margin-top:.4rem;font-style:italic;font-family:'Crimson Pro',serif;}
+
+.stats-row{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+}
+.stat-card{
+  background:var(--card);border:.5px solid var(--border);border-radius:var(--r-sm);
+  padding:.9rem 1rem;text-align:center;
+}
+.stat-val{font-family:'Cinzel',serif;font-size:1.3rem;font-weight:600;color:var(--star);}
+.stat-lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:3px;}
+
+/* semester summary bar */
+.sem-summary{
+  background:var(--card);border:.5px solid var(--border);border-radius:var(--r-sm);
+  padding:.8rem 1.2rem;margin-bottom:12px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+}
+.ss-item{text-align:center;}
+.ss-val{font-family:'Cinzel',serif;font-size:1.1rem;font-weight:600;color:var(--blue);}
+.ss-lbl{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);}
+
+/*══════════════════════════════════════════
+  GRADE REFERENCE
+══════════════════════════════════════════*/
+.grade-ref{
+  background:var(--card);border:.5px solid var(--border);border-radius:var(--r);
+  padding:1.2rem 1.4rem;
+}
+.grade-table{width:100%;border-collapse:collapse;margin-top:.8rem;}
+.grade-table th{
+  font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--faint);padding:.4rem .6rem;text-align:left;
+  border-bottom:.5px solid var(--border);
+}
+.grade-table td{
+  padding:.5rem .6rem;font-size:13px;color:var(--muted);
+  border-bottom:.5px solid rgba(74,180,255,.05);
+}
+.grade-table tr:last-child td{border-bottom:none;}
+.grade-pill{
+  display:inline-block;padding:2px 10px;border-radius:var(--pill);
+  border:.5px solid;font-size:11px;font-weight:500;letter-spacing:.05em;
+}
+.gp-a  {color:var(--green); border-color:rgba(77,201,148,.35); background:rgba(77,201,148,.08);}
+.gp-b  {color:var(--blue);  border-color:rgba(74,180,255,.35); background:rgba(74,180,255,.08);}
+.gp-c  {color:var(--amber); border-color:rgba(201,147,58,.35); background:rgba(201,147,58,.08);}
+.gp-d  {color:var(--red);   border-color:rgba(224,90,90,.35);  background:rgba(224,90,90,.08);}
+.gp-f  {color:#666;         border-color:rgba(100,100,100,.3); background:rgba(100,100,100,.05);}
+
+/*══════════════════════════════════════════
+  SETTINGS / GPA RULES
+══════════════════════════════════════════*/
+.settings-panel{
+  background:var(--card);border:.5px solid var(--border);border-radius:var(--r);
+  overflow:hidden;
+}
+.settings-toggle{
+  width:100%;padding:1rem 1.4rem;background:transparent;border:none;
+  display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;font-family:'Cinzel',serif;font-size:.9rem;font-weight:600;
+  color:var(--star);letter-spacing:.08em;
+}
+.settings-toggle:hover{background:rgba(74,180,255,.03);}
+.settings-body{display:none;padding:0 1.4rem 1.4rem;border-top:.5px solid var(--border);}
+.settings-body.open{display:block;}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:1rem;}
+@media(max-width:500px){.settings-grid{grid-template-columns:1fr;}}
+.setting-row{display:flex;flex-direction:column;gap:5px;}
+.setting-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);}
+.setting-inp{
+  background:rgba(8,15,30,.8);border:.5px solid var(--border-hi);border-radius:var(--r-sm);
+  color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;
+  padding:.55rem .9rem;outline:none;transition:border-color .2s,box-shadow .2s;
+}
+.setting-inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(74,180,255,.1);}
+.settings-note{font-size:11px;color:var(--faint);margin-top:1rem;font-style:italic;line-height:1.5;}
+.chevron{transition:transform .25s;color:var(--muted);font-size:14px;}
+.chevron.open{transform:rotate(180deg);}
+
+/*══════════════════════════════════════════
+  INFO / HOW WEIGHTED GPA WORKS
+══════════════════════════════════════════*/
+.info-box{
+  background:rgba(74,180,255,.04);border:.5px solid rgba(74,180,255,.14);
+  border-radius:var(--r);padding:1.1rem 1.4rem;
+}
+.info-box h4{
+  font-family:'Cinzel',serif;font-size:.82rem;font-weight:600;
+  color:var(--blue);letter-spacing:.1em;margin-bottom:.7rem;
+}
+.info-box p{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:.5rem;}
+.info-box p:last-child{margin-bottom:0;}
+.info-box strong{color:var(--text);font-weight:500;}
+
+/*══════════════════════════════════════════
+  HISTORY PANEL
+══════════════════════════════════════════*/
+.history-panel{
+  background:var(--card);border:.5px solid var(--border);border-radius:var(--r);overflow:hidden;
+}
+.history-head{
+  width:100%;padding:.9rem 1.4rem;background:transparent;border:none;
+  display:flex;align-items:center;justify-content:space-between;cursor:pointer;
+  font-family:'Cinzel',serif;font-size:.9rem;font-weight:600;
+  color:var(--star);letter-spacing:.08em;
+}
+.history-head:hover{background:rgba(74,180,255,.03);}
+.history-body{display:none;padding:0 1.4rem 1.2rem;border-top:.5px solid var(--border);}
+.history-body.open{display:block;}
+.history-list{margin-top:.8rem;display:flex;flex-direction:column;gap:8px;}
+.hist-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.6rem .9rem;border-radius:var(--r-sm);
+  background:rgba(74,180,255,.03);border:.5px solid var(--border);
+  font-size:13px;
+}
+.hist-date{color:var(--faint);font-size:11px;}
+.hist-vals{display:flex;gap:14px;}
+.hist-gpa{font-family:'Cinzel',serif;font-size:.88rem;font-weight:600;color:var(--blue);}
+.hist-empty{font-size:12.5px;color:var(--faint);font-style:italic;margin-top:.8rem;}
+
+/*══════════════════════════════════════════
+  TOAST / NOTIFICATION
+══════════════════════════════════════════*/
+.toast{
+  position:fixed;bottom:1.5rem;right:1.5rem;z-index:300;
+  background:var(--card-hi);border:.5px solid var(--border-hi);
+  border-radius:var(--r-sm);padding:.75rem 1.2rem;
+  font-size:13px;color:var(--text);
+  display:flex;align-items:center;gap:8px;
+  transform:translateY(20px);opacity:0;
+  transition:all .3s ease;pointer-events:none;
+  box-shadow:0 8px 32px rgba(0,0,0,.4);
+}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);}
+
+/*══════════════════════════════════════════
+  LAYOUT SECTIONS
+══════════════════════════════════════════*/
+.app-body{padding-bottom:4rem;}
+.section{margin-bottom:1.5rem;animation:fadeUp .4s ease both;}
+.section+.section{border-top:none;}
+.divider{
+  display:flex;align-items:center;gap:12px;margin:2rem 0 1.5rem;
+  font-family:'Cinzel',serif;font-size:.75rem;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--faint);
+}
+.divider::before,.divider::after{content:'';flex:1;height:.5px;background:linear-gradient(90deg,transparent,var(--faint));}
+.divider::after{background:linear-gradient(90deg,var(--faint),transparent);}
+
+/*══════════════════════════════════════════
+  FOOTER
+══════════════════════════════════════════*/
+footer{
+  border-top:.5px solid var(--border);padding:1.5rem 0;
+  text-align:center;font-size:11px;color:var(--faint);
+}
+
+/*══════════════════════════════════════════
+  RESPONSIVE
+══════════════════════════════════════════*/
+@media(max-width:600px){
+  .course-row{
+    grid-template-columns:1fr 1fr!important;
+    grid-template-rows:auto auto auto;gap:6px;
+  }
+  .course-row .inp-base:first-child{grid-column:1/-1;}
+  .course-row .btn-remove{grid-column:2;justify-self:end;}
+  .results-grid{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+}
+
+/*══════════════════════════════════════════
+  SHARE / EXPORT MODAL
+══════════════════════════════════════════*/
+.export-box{
+  background:rgba(8,15,30,.9);border:.5px solid var(--border-hi);border-radius:var(--r-sm);
+  padding:1rem;font-family:'Outfit',monospace;font-size:12px;
+  color:var(--text);white-space:pre-wrap;word-break:break-all;
+  max-height:220px;overflow-y:auto;margin:1rem 0;line-height:1.6;
+}
+</style>
+</head>
+<body>
+<canvas id="cvs"></canvas>
+<div class="nebula-bg"></div>
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div class="h-inner">
+    <a class="logo" href="#">
+      <svg class="logo-mark" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="17" cy="17" r="15.5" stroke="#4AB4FF" stroke-width=".5" opacity=".4"/>
+        <circle cx="17" cy="17" r="9.5" stroke="#4AB4FF" stroke-width=".5" opacity=".2"/>
+        <line x1="17" y1="1.5" x2="17" y2="7.5" stroke="#4AB4FF" stroke-width=".7" opacity=".65"/>
+        <line x1="17" y1="26.5" x2="17" y2="32.5" stroke="#4AB4FF" stroke-width=".7" opacity=".65"/>
+        <line x1="1.5" y1="17" x2="7.5" y2="17" stroke="#4AB4FF" stroke-width=".7" opacity=".65"/>
+        <line x1="26.5" y1="17" x2="32.5" y2="17" stroke="#4AB4FF" stroke-width=".7" opacity=".65"/>
+        <circle cx="17" cy="17" r="3.2" fill="#4AB4FF" opacity=".9"/>
+        <circle cx="17" cy="17" r="3.2" fill="white" opacity=".2"/>
+      </svg>
+      <div>
+        <div class="logo-name">ATLAS <span style="font-size:13px;letter-spacing:.08em;font-weight:400;color:var(--blue)">GPA</span></div>
+        <span class="logo-sub">Academic Navigator</span>
+      </div>
+    </a>
+    <div class="h-actions">
+      <button class="btn-ghost" id="btnExport" title="Share results">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M3 5l3-4 3 4M1 9v1.5a.5.5 0 00.5.5h9a.5.5 0 00.5-.5V9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        Export
+      </button>
+      <button class="btn-ghost" id="btnReset">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 5.5a4.5 4.5 0 104.5-4.5H3M3 1L1 3l2 2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Reset
+      </button>
+      <button class="btn-primary" id="btnSave">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 8.5V9.5a.5.5 0 00.5.5h8a.5.5 0 00.5-.5V8.5M5.5 1v7M3 5.5L5.5 8l2.5-2.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Save
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ══ SCHOOL MODAL ══ -->
+<div class="modal-overlay" id="schoolModal">
+  <div class="modal">
+    <div class="modal-title">Select Your School</div>
+    <div class="school-list" id="schoolList"></div>
+    <div class="custom-school-row">
+      <input class="inp-base" id="customSchoolInput" placeholder="Add custom school name…" style="flex:1"/>
+      <button class="btn-primary" id="btnAddSchool" style="white-space:nowrap;padding:0 14px;height:38px;border-radius:8px;">Add</button>
+    </div>
+    <button class="modal-close" id="modalClose">Done</button>
+  </div>
+</div>
+
+<!-- ══ EXPORT MODAL ══ -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal">
+    <div class="modal-title">Export Summary</div>
+    <div class="export-box" id="exportBox"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-primary" id="btnCopyExport" style="flex:1;height:38px;border-radius:8px;justify-content:center;">Copy to Clipboard</button>
+      <button class="modal-close" id="exportClose" style="flex:1;">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MAIN APP ══ -->
+<div class="wrap app-body">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge"><div class="badge-dot"></div>GPA Navigation System</div>
+    <h1 class="hero-title">ATLAS <span style="font-size:clamp(1.2rem,3vw,2rem);letter-spacing:.15em;font-weight:400;color:var(--blue)">GPA</span></h1>
+    <div class="hero-rule"></div>
+    <p class="hero-tag">Calculate your GPA with clarity.</p>
+    <p class="hero-sub">Weighted &amp; unweighted · Semester tracking · Instant results</p>
+  </div>
+
+  <!-- SCHOOL SELECTOR -->
+  <div class="school-bar section" id="schoolBar">
+    <span class="school-label">Active School</span>
+    <div class="school-select-wrap">
+      <span class="school-name" id="schoolDisplay">Charter School of Wilmington</span>
+      <button class="school-change" id="btnChangeSchool">Change</button>
+    </div>
+  </div>
+
+  <!-- SEMESTER TABS -->
+  <div class="sem-tabs-wrap" id="semTabs"></div>
+
+  <!-- COURSE INPUT -->
+  <div class="section">
+    <div class="section-head">
+      <div class="sh-dot" style="background:var(--blue);color:var(--blue)"></div>
+      <span class="sh-title">Course Entry</span>
+      <span class="sh-sub" id="semLabel">—</span>
+    </div>
+    <div class="courses-header">
+      <span>Course Name</span><span>Grade</span><span>Credits</span><span>Type</span><span></span>
+    </div>
+    <div id="courseRows"></div>
+    <button class="add-row-btn" id="btnAddRow">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1"/><path d="M7 4v6M4 7h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Add Course
+    </button>
+  </div>
+
+  <!-- DIVIDER -->
+  <div class="divider">Results</div>
+
+  <!-- SEMESTER SUMMARY -->
+  <div class="section">
+    <div class="section-head">
+      <div class="sh-dot" style="background:var(--cyan);color:var(--cyan)"></div>
+      <span class="sh-title">Semester GPA</span>
+    </div>
+    <div class="sem-summary">
+      <div class="ss-item"><div class="ss-val" id="semUW">—</div><div class="ss-lbl">Unweighted</div></div>
+      <div class="ss-item"><div class="ss-val" id="semW">—</div><div class="ss-lbl">Weighted</div></div>
+      <div class="ss-item"><div class="ss-val" id="semCredits">0</div><div class="ss-lbl">Credits</div></div>
+      <div class="ss-item"><div class="ss-val" id="semCount">0</div><div class="ss-lbl">Courses</div></div>
+    </div>
+  </div>
+
+  <!-- CUMULATIVE RESULTS -->
+  <div class="section">
+    <div class="section-head">
+      <div class="sh-dot" style="background:var(--purple);color:var(--purple)"></div>
+      <span class="sh-title">Cumulative GPA</span>
+      <span class="sh-sub">All semesters</span>
+    </div>
+    <div class="results-grid">
+      <div class="result-card primary" style="--rc-col:var(--blue)">
+        <div class="rc-label">Unweighted GPA</div>
+        <div class="rc-value" id="cumUW">—<span>/4.0</span></div>
+        <div class="rc-sub">Standard 4.0 scale</div>
+      </div>
+      <div class="result-card" style="--rc-col:var(--purple)">
+        <div class="rc-label">Weighted GPA</div>
+        <div class="rc-value" id="cumW">—<span>/5.0</span></div>
+        <div class="rc-sub">Honors/AP/IB weighted</div>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-val" id="statCredits">0</div><div class="stat-lbl">Total Credits</div></div>
+      <div class="stat-card"><div class="stat-val" id="statCourses">0</div><div class="stat-lbl">Courses</div></div>
+      <div class="stat-card"><div class="stat-val" id="statSems">0</div><div class="stat-lbl">Semesters</div></div>
+    </div>
+  </div>
+
+  <!-- DIVIDER -->
+  <div class="divider">Reference</div>
+
+  <!-- GRADE REFERENCE -->
+  <div class="section">
+    <div class="section-head">
+      <div class="sh-dot" style="background:var(--amber);color:var(--amber)"></div>
+      <span class="sh-title">Grade Scale</span>
+      <span class="sh-sub">Letter → GPA conversion</span>
+    </div>
+    <div class="grade-ref">
+      <table class="grade-table">
+        <thead>
+          <tr>
+            <th>Letter</th><th>%  Range</th><th>4.0 Points</th>
+            <th>+ Honors</th><th>+ AP / IB</th><th>+ DE</th>
+          </tr>
+        </thead>
+        <tbody id="gradeTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- INFO BOX -->
+  <div class="section info-box">
+    <h4>✦ How Weighted GPA Works</h4>
+    <p>A <strong>weighted GPA</strong> gives extra credit for challenging courses. Honors classes typically add <strong>+0.5</strong> points, while AP, IB, and Dual Enrollment courses add <strong>+1.0</strong> point to the base grade value before averaging.</p>
+    <p>An <strong>unweighted GPA</strong> uses the standard 4.0 scale for all courses regardless of difficulty. Both are important — colleges look at both when evaluating transcripts.</p>
+    <p>Your GPA is calculated as the sum of (grade points × credit hours) divided by total credit hours.</p>
+  </div>
+
+  <!-- DIVIDER -->
+  <div class="divider">Settings</div>
+
+  <!-- GPA SETTINGS -->
+  <div class="section settings-panel">
+    <button class="settings-toggle" id="settingsToggle">
+      <span style="display:flex;align-items:center;gap:10px;">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="2.5" stroke="currentColor" stroke-width="1"/><path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.6 2.6l1.1 1.1M10.3 10.3l1.1 1.1M2.6 11.4l1.1-1.1M10.3 3.7l1.1-1.1" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>
+        GPA Rule Parameters
+      </span>
+      <span class="chevron" id="settingsChevron">▾</span>
+    </button>
+    <div class="settings-body" id="settingsBody">
+      <div class="settings-grid">
+        <div class="setting-row">
+          <label class="setting-label">Max Unweighted (base)</label>
+          <input class="setting-inp" id="sMaxUW" type="number" min="4" max="5" step=".5" value="4.0"/>
+        </div>
+        <div class="setting-row">
+          <label class="setting-label">Honors Bonus</label>
+          <input class="setting-inp" id="sHonors" type="number" min="0" max="1" step=".1" value="0.5"/>
+        </div>
+        <div class="setting-row">
+          <label class="setting-label">AP Bonus</label>
+          <input class="setting-inp" id="sAP" type="number" min="0" max="1" step=".1" value="1.0"/>
+        </div>
+        <div class="setting-row">
+          <label class="setting-label">IB Bonus</label>
+          <input class="setting-inp" id="sIB" type="number" min="0" max="1" step=".1" value="1.0"/>
+        </div>
+        <div class="setting-row">
+          <label class="setting-label">Dual Enrollment Bonus</label>
+          <input class="setting-inp" id="sDE" type="number" min="0" max="1" step=".1" value="1.0"/>
+        </div>
+        <div class="setting-row">
+          <label class="setting-label">Grade Scale</label>
+          <select class="setting-inp" id="sScale">
+            <option value="standard">Standard (A=4, B=3…)</option>
+            <option value="plus">Plus/Minus (A+=4.3…)</option>
+          </select>
+        </div>
+      </div>
+      <p class="settings-note">Changes apply immediately. Settings are saved with your data and persist between sessions.</p>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="section history-panel">
+    <button class="history-head" id="historyToggle">
+      <span style="display:flex;align-items:center;gap:10px;">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1"/><path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Calculation History
+      </span>
+      <span class="chevron" id="histChevron">▾</span>
+    </button>
+    <div class="history-body" id="historyBody">
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">ATLAS GPA — An independent academic tool. Not affiliated with any school, College Board, or testing organization.</div>
+</footer>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><div class="toast-dot"></div><span id="toastMsg">Saved</span></div>
+
+<script>
+/* ═══════════════════════════════════════
+   STARFIELD  — constellation cluster edition
+   Layers:
+   1. Field stars  — ~700 small dots, clearly visible, varied brightness
+   2. Cluster stars — 4 constellation-style groups at viewport corners/edges
+                      connected by faint lines, larger & brighter than field stars
+   3. Sparkle stars — ~30 brightest field stars get a 4-point crosshair
+   All clusters are placed in the outer 20% of the viewport so they never
+   sit behind the scrolling content column.
+═══════════════════════════════════════ */
+(function(){
+  const c=document.getElementById('cvs'),ctx=c.getContext('2d');
+  let W=0,H=0,field=[],clusters=[];
+
+  /* ── SEEDED LCG for deterministic cluster positions ── */
+  function lcg(seed){
+    let s=seed>>>0;
+    return()=>{s=(Math.imul(1664525,s)+1013904223)>>>0;return s/4294967296;};
+  }
+
+  /* ── CLUSTER DEFINITIONS (fractional coords, resolved on resize) ──
+     Each cluster has an anchor point in the viewport margin and a set of
+     relative star offsets. Lines connect pairs of stars by index.
+     Positioned deliberately in corners/edges, away from centre content.
+  ── */
+  const CLUSTER_DEFS=[
+    /* TOP-LEFT corner — 7-star pattern */
+    {
+      ax:.06, ay:.08, spread:180,
+      stars:[
+        {dx:0,   dy:0,   r:3.8, a:.92},   /* 0 anchor — brightest */
+        {dx:110, dy:40,  r:2.8, a:.78},   /* 1 */
+        {dx:55,  dy:95,  r:2.2, a:.65},   /* 2 */
+        {dx:175, dy:80,  r:2.5, a:.70},   /* 3 */
+        {dx:-30, dy:130, r:1.8, a:.58},   /* 4 */
+        {dx:140, dy:150, r:2.0, a:.62},   /* 5 */
+        {dx:70,  dy:190, r:1.6, a:.50},   /* 6 */
+      ],
+      lines:[[0,1],[1,2],[1,3],[2,4],[3,5],[2,5],[5,6]],
+      col:'190,218,255'
+    },
+    /* TOP-RIGHT corner — 6-star pattern */
+    {
+      ax:.94, ay:.06, spread:170,
+      stars:[
+        {dx:0,   dy:0,   r:3.5, a:.88},   /* 0 */
+        {dx:-90, dy:55,  r:2.4, a:.72},   /* 1 */
+        {dx:-160,dy:30,  r:2.0, a:.60},   /* 2 */
+        {dx:-55, dy:130, r:2.6, a:.75},   /* 3 */
+        {dx:-130,dy:150, r:1.8, a:.55},   /* 4 */
+        {dx:-200,dy:100, r:2.2, a:.65},   /* 5 */
+      ],
+      lines:[[0,1],[1,2],[1,3],[3,4],[4,5],[2,5]],
+      col:'180,210,255'
+    },
+    /* BOTTOM-LEFT — 8-star arc */
+    {
+      ax:.05, ay:.88, spread:190,
+      stars:[
+        {dx:0,   dy:0,   r:3.2, a:.85},   /* 0 */
+        {dx:80,  dy:-60, r:2.6, a:.70},   /* 1 */
+        {dx:160, dy:-30, r:2.0, a:.62},   /* 2 */
+        {dx:30,  dy:-130,r:2.4, a:.68},   /* 3 */
+        {dx:120, dy:-140,r:1.8, a:.56},   /* 4 */
+        {dx:200, dy:-90, r:2.8, a:.75},   /* 5 */
+        {dx:240, dy:-160,r:1.6, a:.50},   /* 6 */
+        {dx:90,  dy:-200,r:2.0, a:.60},   /* 7 */
+      ],
+      lines:[[0,1],[1,2],[0,3],[3,4],[4,7],[1,5],[5,6],[2,5]],
+      col:'185,215,255'
+    },
+    /* BOTTOM-RIGHT — 7-star scatter */
+    {
+      ax:.93, ay:.90, spread:185,
+      stars:[
+        {dx:0,   dy:0,   r:3.6, a:.90},   /* 0 */
+        {dx:-70, dy:-80, r:2.4, a:.72},   /* 1 */
+        {dx:-150,dy:-40, r:2.8, a:.78},   /* 2 */
+        {dx:-100,dy:-160,r:2.0, a:.60},   /* 3 */
+        {dx:-200,dy:-120,r:2.4, a:.68},   /* 4 */
+        {dx:-30, dy:-200,r:1.8, a:.55},   /* 5 */
+        {dx:-180,dy:-230,r:1.6, a:.48},   /* 6 */
+      ],
+      lines:[[0,1],[1,2],[1,3],[3,5],[2,4],[4,6],[3,6]],
+      col:'190,220,255'
+    },
+    /* RIGHT EDGE MID — small 5-star asterism */
+    {
+      ax:.97, ay:.44, spread:130,
+      stars:[
+        {dx:0,   dy:0,   r:2.8, a:.80},
+        {dx:-80, dy:-50, r:2.0, a:.62},
+        {dx:-120,dy:30,  r:1.8, a:.55},
+        {dx:-60, dy:100, r:2.2, a:.65},
+        {dx:-160,dy:70,  r:1.6, a:.50},
+      ],
+      lines:[[0,1],[0,2],[2,3],[1,4],[3,4]],
+      col:'175,210,255'
+    }
+  ];
+
+  function resize(){
+    W=c.width=innerWidth;
+    H=c.height=innerHeight;
+    buildClusters();
+    buildField();
+  }
+
+  /* resolve cluster star pixel positions */
+  function buildClusters(){
+    clusters=CLUSTER_DEFS.map(def=>{
+      const ox=def.ax*W, oy=def.ay*H;
+      const stars=def.stars.map((s,i)=>({
+        x:ox+s.dx, y:oy+s.dy,
+        r:s.r, baseA:s.a,
+        /* each star gets its own twinkle phase */
+        sp:.006+i*.0018, ph:i*1.3,
+        sparkle:s.r>=3.0
+      }));
+      return{stars, lines:def.lines, col:def.col};
+    });
+  }
+
+  /* field stars — high count, clearly visible, varied */
+  function buildField(){
+    const rand=lcg(0xABCD1234);
+    field=[];
+    const N=700;
+    for(let i=0;i<N;i++){
+      const isSpark=i<30;
+      field.push({
+        x:rand()*W, y:rand()*H,
+        r:isSpark?(rand()*.8+1.0):(rand()*1.2+.25),
+        baseA:isSpark?(rand()*.35+.55):(rand()*.50+.18),
+        sp:rand()*.016+.002,
+        ph:rand()*Math.PI*2,
+        sparkle:isSpark
+      });
+    }
+  }
+
+  let t=0;
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    t+=.005;
+
+    /* ── 1. FIELD STARS ── */
+    field.forEach(s=>{
+      const al=s.baseA*(.55+.45*Math.sin(t*s.sp*60+s.ph));
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(190,218,255,${al.toFixed(3)})`;
+      ctx.fill();
+      if(s.sparkle){
+        const arm=s.r*3.5;
+        ctx.strokeStyle=`rgba(200,224,255,${(al*.38).toFixed(3)})`;
+        ctx.lineWidth=.45;
+        ctx.beginPath();
+        ctx.moveTo(s.x,s.y-arm);ctx.lineTo(s.x,s.y+arm);
+        ctx.moveTo(s.x-arm,s.y);ctx.lineTo(s.x+arm,s.y);
+        ctx.stroke();
+      }
+    });
+
+    /* ── 2. CONSTELLATION CLUSTERS ── */
+    clusters.forEach(cl=>{
+      /* draw connecting lines first */
+      cl.lines.forEach(([a,b])=>{
+        const sa=cl.stars[a], sb=cl.stars[b];
+        /* line brightness pulses gently with average of its two endpoint stars */
+        const alA=sa.baseA*(.5+.5*Math.sin(t*sa.sp*60+sa.ph));
+        const alB=sb.baseA*(.5+.5*Math.sin(t*sb.sp*60+sb.ph));
+        const lineAl=((alA+alB)*.5)*.28;
+        ctx.beginPath();
+        ctx.moveTo(sa.x,sa.y);ctx.lineTo(sb.x,sb.y);
+        ctx.strokeStyle=`rgba(${cl.col},${lineAl.toFixed(3)})`;
+        ctx.lineWidth=.65;
+        ctx.stroke();
+      });
+
+      /* draw stars on top of lines */
+      cl.stars.forEach(s=>{
+        const al=s.baseA*(.5+.5*Math.sin(t*s.sp*60+s.ph));
+
+        /* outer glow halo */
+        const grad=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*4);
+        grad.addColorStop(0,  `rgba(${cl.col},${(al*.3).toFixed(3)})`);
+        grad.addColorStop(1,  `rgba(${cl.col},0)`);
+        ctx.beginPath();
+        ctx.arc(s.x,s.y,s.r*4,0,Math.PI*2);
+        ctx.fillStyle=grad;
+        ctx.fill();
+
+        /* star core */
+        ctx.beginPath();
+        ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+        ctx.fillStyle=`rgba(${cl.col},${al.toFixed(3)})`;
+        ctx.fill();
+
+        /* bright centre pinpoint */
+        ctx.beginPath();
+        ctx.arc(s.x,s.y,s.r*.35,0,Math.PI*2);
+        ctx.fillStyle=`rgba(230,242,255,${(al*.85).toFixed(3)})`;
+        ctx.fill();
+
+        /* 4-point crosshair on the larger cluster stars */
+        if(s.sparkle){
+          const arm=s.r*3.8;
+          ctx.strokeStyle=`rgba(${cl.col},${(al*.4).toFixed(3)})`;
+          ctx.lineWidth=.5;
+          ctx.beginPath();
+          ctx.moveTo(s.x,s.y-arm);ctx.lineTo(s.x,s.y+arm);
+          ctx.moveTo(s.x-arm,s.y);ctx.lineTo(s.x+arm,s.y);
+          ctx.stroke();
+        }
+      });
+    });
+
+    requestAnimationFrame(draw);
+  }
+
+  resize();draw();
+  addEventListener('resize',resize);
+})();
+
+/* ═══════════════════════════════════════
+   STATE
+═══════════════════════════════════════ */
+const DEFAULT_SETTINGS={maxUW:4.0,honors:.5,ap:1.0,ib:1.0,de:1.0,scale:'standard'};
+const DEFAULT_SCHOOLS=[
+  {id:'csw',name:'Charter School of Wilmington',sub:'Wilmington, DE — 4.0 scale, AP weighted'},
+  {id:'gen',name:'Generic High School',sub:'Standard 4.0 unweighted scale'},
+  {id:'cchs',name:'Cape Henlopen HS',sub:'Delaware — weighted 5.0 scale'},
+  {id:'salesianum',name:'Salesianum School',sub:'Wilmington, DE — AP/Honors weighted'}
+];
+
+let state={
+  school:'Charter School of Wilmington',
+  settings:{...DEFAULT_SETTINGS},
+  semesters:[{id:'s1',name:'Summer 2026',courses:emptyEight()}],
+  activeSem:0,
+  history:[]
+};
+
+function emptyEight(){
+  const rows=[];
+  for(let i=0;i<8;i++) rows.push({id:uid(),name:'',grade:'',credits:'1',type:'regular'});
+  return rows;
+}
+function uid(){return Math.random().toString(36).slice(2,9);}
+
+/* ═══════════════════════════════════════
+   GRADE SCALES
+═══════════════════════════════════════ */
+const SCALE_STANDARD=[
+  {letter:'A+',pct:'97–100',pts:4.0,class:'gp-a'},
+  {letter:'A', pct:'93–96', pts:4.0,class:'gp-a'},
+  {letter:'A-',pct:'90–92', pts:3.7,class:'gp-a'},
+  {letter:'B+',pct:'87–89', pts:3.3,class:'gp-b'},
+  {letter:'B', pct:'83–86', pts:3.0,class:'gp-b'},
+  {letter:'B-',pct:'80–82', pts:2.7,class:'gp-b'},
+  {letter:'C+',pct:'77–79', pts:2.3,class:'gp-c'},
+  {letter:'C', pct:'73–76', pts:2.0,class:'gp-c'},
+  {letter:'C-',pct:'70–72', pts:1.7,class:'gp-c'},
+  {letter:'D+',pct:'67–69', pts:1.3,class:'gp-d'},
+  {letter:'D', pct:'63–66', pts:1.0,class:'gp-d'},
+  {letter:'D-',pct:'60–62', pts:0.7,class:'gp-d'},
+  {letter:'F', pct:'0–59',  pts:0.0,class:'gp-f'}
+];
+
+function gradeToPoints(g,scale){
+  const s=SCALE_STANDARD;
+  const m=g.trim().toUpperCase();
+  const found=s.find(r=>r.letter===m);
+  if(found) return found.pts;
+  /* percentage input */
+  const n=parseFloat(m);
+  if(!isNaN(n)){
+    if(n>=97) return 4.0; if(n>=93) return 4.0; if(n>=90) return 3.7;
+    if(n>=87) return 3.3; if(n>=83) return 3.0; if(n>=80) return 2.7;
+    if(n>=77) return 2.3; if(n>=73) return 2.0; if(n>=70) return 1.7;
+    if(n>=67) return 1.3; if(n>=63) return 1.0; if(n>=60) return 0.7;
+    return 0.0;
+  }
+  return null;
+}
+
+function typeBonus(type){
+  const s=state.settings;
+  if(type==='honors') return s.honors;
+  if(type==='ap') return s.ap;
+  if(type==='ib') return s.ib;
+  if(type==='de') return s.de;
+  return 0;
+}
+
+function typeColor(type){
+  if(type==='honors') return 'var(--c-honors)';
+  if(type==='ap')     return 'var(--c-ap)';
+  if(type==='de')     return 'var(--c-de)';
+  if(type==='ib')     return 'var(--c-ib)';
+  return 'var(--c-regular)';
+}
+function typeLabel(type){
+  return {regular:'REG',honors:'HON',ap:'AP',de:'DE',ib:'IB'}[type]||type.toUpperCase();
+}
+
+/* ═══════════════════════════════════════
+   GPA CALCULATION
+═══════════════════════════════════════ */
+function calcSemGPA(courses){
+  let uwSum=0,wSum=0,credits=0,count=0;
+  courses.forEach(c=>{
+    const pts=gradeToPoints(c.grade);
+    const cr=parseFloat(c.credits)||0;
+    if(pts===null||!cr) return;
+    count++;credits+=cr;
+    uwSum+=pts*cr;
+    wSum+=(pts+typeBonus(c.type))*cr;
+  });
+  if(!credits) return {uw:null,w:null,credits:0,count};
+  return{uw:uwSum/credits,w:wSum/credits,credits,count};
+}
+
+function calcCumGPA(){
+  let uwSum=0,wSum=0,totalCr=0,totalCount=0;
+  state.semesters.forEach(sem=>{
+    const r=calcSemGPA(sem.courses);
+    if(r.credits){uwSum+=r.uw*r.credits;wSum+=r.w*r.credits;totalCr+=r.credits;}
+    totalCount+=r.count;
+  });
+  if(!totalCr) return{uw:null,w:null,credits:0,count:totalCount};
+  return{uw:uwSum/totalCr,w:wSum/totalCr,credits:totalCr,count:totalCount};
+}
+
+function fmt(n){return n===null?'—':n.toFixed(2);}
+
+/* ═══════════════════════════════════════
+   RENDER FUNCTIONS
+═══════════════════════════════════════ */
+/* SEMESTER TABS */
+function renderTabs(){
+  const wrap=document.getElementById('semTabs');
+  wrap.innerHTML='';
+  state.semesters.forEach((sem,i)=>{
+    const btn=document.createElement('button');
+    btn.className='sem-tab'+(i===state.activeSem?' active':'');
+    btn.dataset.i=i;
+    /* name span + pencil rename btn + delete btn */
+    btn.innerHTML=`
+      <span class="sem-tab-name">${esc(sem.name)}</span>
+      <span class="sem-tab-rename" data-i="${i}" title="Rename">✎</span>
+      ${state.semesters.length>1?`<span class="sem-tab-del" data-i="${i}">✕</span>`:''}`;
+    btn.addEventListener('click',e=>{
+      if(e.target.classList.contains('sem-tab-del')){
+        if(state.semesters.length<2) return;
+        state.semesters.splice(i,1);
+        if(state.activeSem>=state.semesters.length) state.activeSem=state.semesters.length-1;
+        saveLocal();renderAll();
+      } else if(e.target.classList.contains('sem-tab-rename')){
+        const n=prompt('Rename semester:',state.semesters[i].name);
+        if(n&&n.trim()){state.semesters[i].name=n.trim();saveLocal();renderTabs();}
+      } else {
+        state.activeSem=i;
+        saveLocal();renderAll();
+      }
+    });
+    wrap.appendChild(btn);
+  });
+  /* add button */
+  const add=document.createElement('button');
+  add.className='sem-tab-add';add.title='Add semester';add.textContent='+';
+  add.addEventListener('click',()=>{
+    const names=[
+      'Summer 2026','Fall 2026','Spring 2027','Summer 2027',
+      'Fall 2027','Spring 2028','Summer 2028','Fall 2028','Spring 2029'
+    ];
+    const existing=state.semesters.map(s=>s.name);
+    const next=names.find(n=>!existing.includes(n))||`Semester ${state.semesters.length+1}`;
+    state.semesters.push({id:uid(),name:next,courses:emptyEight()});
+    state.activeSem=state.semesters.length-1;
+    saveLocal();renderAll();
+  });
+  wrap.appendChild(add);
+
+  document.getElementById('semLabel').textContent=state.semesters[state.activeSem]?.name||'';
+}
+
+/* COURSE ROWS */
+function renderRows(){
+  const container=document.getElementById('courseRows');
+  container.innerHTML='';
+  const sem=state.semesters[state.activeSem];
+  if(!sem) return;
+  sem.courses.forEach((c,i)=>{
+    const row=document.createElement('div');
+    row.className='course-row';
+    const pts=gradeToPoints(c.grade);
+    const accent=c.type?typeColor(c.type):'var(--border)';
+    row.style.cssText=`--row-accent:${accent};`;
+    if(pts!==null&&c.grade) row.classList.add('has-grade');
+
+    row.innerHTML=`
+      <input class="inp-base" type="text" placeholder="Course name…" value="${esc(c.name)}" data-field="name" data-i="${i}"/>
+      <input class="inp-base" type="text" placeholder="A, B+, 92…" value="${esc(c.grade)}" data-field="grade" data-i="${i}" style="text-align:center;"/>
+      <input class="inp-base" type="number" min=".5" max="5" step=".5" value="${c.credits}" data-field="credits" data-i="${i}" style="text-align:center;"/>
+      <select class="inp-base" data-field="type" data-i="${i}">
+        ${['regular','honors','ap','de','ib'].map(t=>`<option value="${t}"${c.type===t?' selected':''}>${{regular:'Regular',honors:'Honors',ap:'AP',de:'Dual Enrollment',ib:'IB'}[t]}</option>`).join('')}
+      </select>
+      <button class="btn-remove" data-i="${i}" title="Remove">×</button>`;
+
+    row.querySelectorAll('[data-field]').forEach(el=>{
+      el.addEventListener('input',e=>handleInput(e));
+      el.addEventListener('change',e=>handleInput(e));
+    });
+    row.querySelector('.btn-remove').addEventListener('click',e=>{
+      const idx=parseInt(e.currentTarget.dataset.i);
+      sem.courses.splice(idx,1);
+      saveLocal();renderAll();
+    });
+
+    container.appendChild(row);
+  });
+}
+
+function handleInput(e){
+  const field=e.target.dataset.field;
+  const i=parseInt(e.target.dataset.i);
+  const sem=state.semesters[state.activeSem];
+  if(!sem) return;
+  sem.courses[i][field]=e.target.value;
+  saveLocal();renderResults();
+  /* update row accent live without full re-render */
+  const row=e.target.closest('.course-row');
+  if(row){
+    row.style.setProperty('--row-accent',typeColor(sem.courses[i].type));
+    const pts=gradeToPoints(sem.courses[i].grade);
+    row.classList.toggle('has-grade',pts!==null&&!!sem.courses[i].grade);
+  }
+}
+
+/* RESULTS */
+function renderResults(){
+  const sem=state.semesters[state.activeSem];
+  const sr=calcSemGPA(sem?.courses||[]);
+  document.getElementById('semUW').textContent=fmt(sr.uw);
+  document.getElementById('semW').textContent=fmt(sr.w);
+  document.getElementById('semCredits').textContent=sr.credits.toFixed(1).replace('.0','');
+  document.getElementById('semCount').textContent=sr.count;
+
+  const cr=calcCumGPA();
+  document.getElementById('cumUW').innerHTML=`${fmt(cr.uw)}<span>/4.0</span>`;
+  document.getElementById('cumW').innerHTML=`${fmt(cr.w)}<span>/5.0</span>`;
+  document.getElementById('statCredits').textContent=cr.credits.toFixed(1).replace('.0','');
+  document.getElementById('statCourses').textContent=cr.count;
+  document.getElementById('statSems').textContent=state.semesters.length;
+}
+
+/* GRADE TABLE */
+function renderGradeTable(){
+  const tbody=document.getElementById('gradeTableBody');
+  const sh=state.settings.honors, sa=state.settings.ap, si=state.settings.ib, sd=state.settings.de;
+  tbody.innerHTML=SCALE_STANDARD.map(r=>`
+    <tr>
+      <td><span class="grade-pill ${r.class}">${r.letter}</span></td>
+      <td style="color:var(--faint)">${r.pct}</td>
+      <td style="color:var(--text);font-weight:500">${r.pts.toFixed(1)}</td>
+      <td style="color:var(--cyan)">${r.pts>0?(r.pts+sh).toFixed(1):'—'}</td>
+      <td style="color:var(--purple)">${r.pts>0?(r.pts+sa).toFixed(1):'—'}</td>
+      <td style="color:var(--amber)">${r.pts>0?(r.pts+sd).toFixed(1):'—'}</td>
+    </tr>`).join('');
+}
+
+/* SCHOOL LIST */
+function renderSchoolList(){
+  const list=document.getElementById('schoolList');
+  const schools=[...DEFAULT_SCHOOLS,...(state.customSchools||[])];
+  list.innerHTML=schools.map(s=>`
+    <button class="school-opt${state.school===s.name?' selected':''}" data-name="${esc(s.name)}">
+      <div><div class="so-name">${esc(s.name)}</div><div class="so-sub">${esc(s.sub||'')}</div></div>
+      <div class="so-dot"></div>
+    </button>`).join('');
+  list.querySelectorAll('.school-opt').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      state.school=btn.dataset.name;
+      document.getElementById('schoolDisplay').textContent=state.school;
+      list.querySelectorAll('.school-opt').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      saveLocal();
+    });
+  });
+}
+
+/* HISTORY */
+function renderHistory(){
+  const list=document.getElementById('historyList');
+  if(!state.history.length){
+    list.innerHTML='<div class="hist-empty">No saved calculations yet. Hit Save to record a snapshot.</div>';
+    return;
+  }
+  list.innerHTML=state.history.slice().reverse().slice(0,10).map(h=>`
+    <div class="hist-item">
+      <span style="color:var(--muted);font-size:12px">${h.label}</span>
+      <span class="hist-date">${h.date}</span>
+      <div class="hist-vals">
+        <span class="hist-gpa">${h.uw} UW</span>
+        <span class="hist-gpa" style="color:var(--purple)">${h.w} W</span>
+      </div>
+    </div>`).join('');
+}
+
+function renderAll(){
+  renderTabs();
+  renderRows();
+  renderResults();
+  renderGradeTable();
+  renderHistory();
+}
+
+/* ═══════════════════════════════════════
+   ADD ROW
+═══════════════════════════════════════ */
+document.getElementById('btnAddRow').addEventListener('click',()=>{
+  const sem=state.semesters[state.activeSem];
+  sem.courses.push({id:uid(),name:'',grade:'',credits:'1',type:'regular'});
+  saveLocal();renderRows();renderResults();
+});
+
+/* ═══════════════════════════════════════
+   SETTINGS
+═══════════════════════════════════════ */
+document.getElementById('settingsToggle').addEventListener('click',()=>{
+  const body=document.getElementById('settingsBody');
+  const chev=document.getElementById('settingsChevron');
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+});
+
+['sMaxUW','sHonors','sAP','sIB','sDE','sScale'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',syncSettings);
+});
+
+function syncSettings(){
+  state.settings={
+    maxUW:parseFloat(document.getElementById('sMaxUW').value)||4.0,
+    honors:parseFloat(document.getElementById('sHonors').value)||0,
+    ap:parseFloat(document.getElementById('sAP').value)||0,
+    ib:parseFloat(document.getElementById('sIB').value)||0,
+    de:parseFloat(document.getElementById('sDE').value)||0,
+    scale:document.getElementById('sScale').value
+  };
+  saveLocal();renderResults();renderGradeTable();
+}
+
+function loadSettingsUI(){
+  document.getElementById('sMaxUW').value=state.settings.maxUW;
+  document.getElementById('sHonors').value=state.settings.honors;
+  document.getElementById('sAP').value=state.settings.ap;
+  document.getElementById('sIB').value=state.settings.ib;
+  document.getElementById('sDE').value=state.settings.de;
+  document.getElementById('sScale').value=state.settings.scale;
+}
+
+/* ═══════════════════════════════════════
+   HISTORY TOGGLE
+═══════════════════════════════════════ */
+document.getElementById('historyToggle').addEventListener('click',()=>{
+  document.getElementById('historyBody').classList.toggle('open');
+  document.getElementById('histChevron').classList.toggle('open');
+});
+
+/* ═══════════════════════════════════════
+   SCHOOL MODAL
+═══════════════════════════════════════ */
+document.getElementById('btnChangeSchool').addEventListener('click',()=>{
+  renderSchoolList();
+  document.getElementById('schoolModal').classList.add('open');
+});
+document.getElementById('modalClose').addEventListener('click',()=>document.getElementById('schoolModal').classList.remove('open'));
+document.getElementById('schoolModal').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open');});
+
+document.getElementById('btnAddSchool').addEventListener('click',()=>{
+  const v=document.getElementById('customSchoolInput').value.trim();
+  if(!v) return;
+  if(!state.customSchools) state.customSchools=[];
+  state.customSchools.push({id:uid(),name:v,sub:'Custom school'});
+  document.getElementById('customSchoolInput').value='';
+  saveLocal();renderSchoolList();
+});
+
+/* ═══════════════════════════════════════
+   SAVE / RESET
+═══════════════════════════════════════ */
+document.getElementById('btnSave').addEventListener('click',()=>{
+  const cum=calcCumGPA();
+  state.history.push({
+    label:state.semesters[state.activeSem]?.name||'Snapshot',
+    date:new Date().toLocaleDateString(),
+    uw:fmt(cum.uw),w:fmt(cum.w)
+  });
+  saveLocal();renderHistory();
+  showToast('Progress saved ✦');
+});
+
+document.getElementById('btnReset').addEventListener('click',()=>{
+  if(!confirm('Reset all courses and start over?')) return;
+  state.semesters=[{id:uid(),name:'Fall 2024',courses:emptyEight()}];
+  state.activeSem=0;
+  saveLocal();renderAll();
+  showToast('Reset complete');
+});
+
+/* ═══════════════════════════════════════
+   EXPORT
+═══════════════════════════════════════ */
+document.getElementById('btnExport').addEventListener('click',()=>{
+  const cum=calcCumGPA();
+  let out=`ATLAS GPA — Export\n${'─'.repeat(36)}\n`;
+  out+=`School: ${state.school}\n`;
+  out+=`Cumulative Unweighted GPA: ${fmt(cum.uw)}\n`;
+  out+=`Cumulative Weighted GPA:   ${fmt(cum.w)}\n`;
+  out+=`Total Credits: ${cum.credits} | Courses: ${cum.count}\n\n`;
+  state.semesters.forEach(sem=>{
+    const sr=calcSemGPA(sem.courses);
+    out+=`── ${sem.name} ──\n`;
+    out+=`  GPA: ${fmt(sr.uw)} UW / ${fmt(sr.w)} W  (${sr.credits} credits)\n`;
+    sem.courses.filter(c=>c.name||c.grade).forEach(c=>{
+      const pts=gradeToPoints(c.grade);
+      out+=`  ${(c.name||'Unnamed').padEnd(28)} ${(c.grade||'—').padEnd(6)} ${typeLabel(c.type).padEnd(4)} ${pts!==null?pts.toFixed(1):'—'}\n`;
+    });
+    out+='\n';
+  });
+  out+=`Generated: ${new Date().toLocaleString()}\n`;
+  document.getElementById('exportBox').textContent=out;
+  document.getElementById('exportModal').classList.add('open');
+});
+document.getElementById('exportClose').addEventListener('click',()=>document.getElementById('exportModal').classList.remove('open'));
+document.getElementById('exportModal').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open');});
+document.getElementById('btnCopyExport').addEventListener('click',()=>{
+  navigator.clipboard.writeText(document.getElementById('exportBox').textContent).then(()=>showToast('Copied to clipboard ✦'));
+});
+
+/* ═══════════════════════════════════════
+   PERSIST  (key versioned — bump to bust stale cache)
+═══════════════════════════════════════ */
+const STORE_KEY='atlas-gpa-v2';
+function saveLocal(){
+  try{localStorage.setItem(STORE_KEY,JSON.stringify(state));}catch(e){}
+}
+function loadLocal(){
+  try{
+    const raw=localStorage.getItem(STORE_KEY);
+    if(raw){const saved=JSON.parse(raw);Object.assign(state,saved);}
+  }catch(e){}
+}
+
+/* ═══════════════════════════════════════
+   TOAST
+═══════════════════════════════════════ */
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toastMsg').textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+/* ═══════════════════════════════════════
+   UTILS
+═══════════════════════════════════════ */
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+/* ═══════════════════════════════════════
+   INIT
+═══════════════════════════════════════ */
+loadLocal();
+loadSettingsUI();
+document.getElementById('schoolDisplay').textContent=state.school;
+renderAll();
+</script>
+</body>
+</html>
