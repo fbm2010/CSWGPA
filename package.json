@@ -1,0 +1,32 @@
+{
+  "name": "atlas-gpa-backend",
+  "version": "2.0.0",
+  "description": "ATLAS GPA Backend — CSW Schoology PDF import, Google OAuth, GPA calculation",
+  "main": "src/index.js",
+  "dependencies": {
+    "better-sqlite3": "^12.10.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "fuse.js": "^7.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "pdf-parse": "^1.1.1",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.0",
+    "supertest": "^7.0.0"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "migrate": "node src/db/migrate.js",
+    "test": "jest --testPathPattern=src/__tests__ --runInBand",
+    "setup": "npm install && node src/db/migrate.js"
+  }
+}
