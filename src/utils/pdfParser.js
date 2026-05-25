@@ -123,6 +123,13 @@ const CANONICAL_OVERRIDES = {
   'INTEGRATED SOCIAL SCIENCE': 'Integrated Social Science',
   'DRIVER ED':            'Driver Education',
   'DRIVERS ED':           'Driver Education',
+  'AP COMP SCI A':        'AP Computer Science A',
+  'INT SOCIAL SCIENCE':   'Integrated Social Science',
+  'WORLD HIST':           'World History',
+  'ENV SCIENCE':          'Environmental Science',
+  'AP ENV SCIENCE':       'AP Environmental Science',
+  'AP FRENCH':            'AP French Language and Culture',
+  'AP SPANISH':           'AP Spanish Language and Culture',
 };
 
 function canonicalizeName(raw) {

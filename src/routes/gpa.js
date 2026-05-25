@@ -63,4 +63,40 @@ router.post('/api/gpa/what-if', (req, res) => {
   }
 });
 
+router.post('/api/gpa/report', (req, res) => {
+  try {
+    const courses = flattenInput(req.body);
+    if (!courses.length) return res.status(400).json({ error: 'No courses provided' });
+    const result = calculateGPA(courses, { excludeList: buildExcludeList() });
+    const date = new Date().toISOString().split('T')[0];
+    const lines = [
+      'ATLAS GPA — CSW Export',
+      '─'.repeat(38),
+      `Generated: ${new Date().toLocaleString()}`,
+      `Unweighted GPA: ${result.unweightedGPA != null ? result.unweightedGPA.toFixed(2) : '—'}`,
+      `Weighted GPA:   ${result.weightedGPA   != null ? result.weightedGPA.toFixed(2)   : '—'}`,
+      `Total Credits:  ${result.totalCredits}`,
+      `Course Count:   ${result.courseCount}`,
+      '',
+      '── Included Courses ──',
+    ];
+    result.includedCourses.forEach(c => {
+      lines.push(`  ${(c.name||'Unnamed').padEnd(32)} ${String(c.grade).padEnd(6)} ${(c.phase||'—').padEnd(6)} ${c.qualityPoints.toFixed(1)} pts`);
+    });
+    if (result.excludedCourses.length) {
+      lines.push('', '── Excluded from GPA ──');
+      result.excludedCourses.forEach(c => {
+        lines.push(`  ${(c.name||'Unnamed').padEnd(32)} ${c.exclusionReason||''}`);
+      });
+    }
+    const text = lines.join('\n');
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="ATLAS_GPA_Report_${date}.txt"`);
+    res.send(text);
+  } catch (err) {
+    console.error('[gpa/report]', err.message);
+    res.status(500).json({ error: 'Report generation failed', detail: err.message });
+  }
+});
+
 module.exports = router;
