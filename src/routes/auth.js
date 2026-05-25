@@ -112,10 +112,7 @@ function formatProfile(user) {
 
 router.get('/auth/google', (req, res, next) => {
   if (!process.env.GOOGLE_OAUTH_CLIENT_ID) {
-    return res.status(503).json({
-      error: 'Google OAuth not configured',
-      hint:  'Set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET in .env',
-    });
+    return res.redirect('/?auth_error=google_disabled');
   }
   passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
 });

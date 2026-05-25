@@ -71,6 +71,8 @@ const SKIP_PATTERNS = [
   /^Midterm/i,
   /^Final/i,
   /^Course Grade/i,
+  /^Year Grade/i,
+  /^Final Average/i,
   /^\[.*\]/,
   /^Parent['']s Signature/i,
   /^Teacher['']s Signature/i,
@@ -79,6 +81,7 @@ const SKIP_PATTERNS = [
   /^100 N DuPont/i,
   /^Wilmington/i,
   /^May \d+/i,
+  /^June \d+/i,
   /^csw\.schoology\.com/i,
   /^https?:\/\//i,
   /^\d+\/\d+\/\d+,/,  // timestamp line
@@ -89,6 +92,13 @@ const SKIP_PATTERNS = [
   /^MIDTERM/i,
   /^FINAL/i,
   /^Intermediate/i,
+  /^Period \d/i,
+  /^Quarter \d/i,
+  /^Semester \d/i,
+  /^Marking Period/i,
+  /^\d{1,3}%\s*$/,        // bare percentage line
+  /^[A-F][+-]?\s*$/,       // bare letter grade line
+  /^N\/A\s*$/i,
 ];
 
 /**
@@ -210,7 +220,8 @@ async function parseSchoologyPDF(pdfBuffer) {
     }
 
     // 3. ALWAYS check Course Grade row SECOND — before any other filter
-    const cgMatch = t.match(/^Course\s+Grade\s+([\d.]+%?|N\/A|-)\s*$/i);
+    // Match "Course Grade 92%", "Course Grade N/A", "Year Grade 88%", "Final Average: 91%"
+    const cgMatch = t.match(/^(?:Course\s+Grade|Year\s+Grade|Final\s+Average)[:\s]+([\d.]+%?|N\/A|-)\s*$/i);
     if (cgMatch && currentCourse) {
       const raw        = cgMatch[1].replace('%', '').trim();
       const finalGrade = (raw === 'N/A' || raw === '-' || raw === '') ? 'N/A' : raw;
@@ -258,11 +269,15 @@ async function parseSchoologyPDF(pdfBuffer) {
         const rawName   = npMatch[1].trim();
         const sectionId = npMatch[2];
         if (rawName.length < 3) continue;
-        if (/^(grades|course|student|school|parent|teacher|may |the |100 |https)/i.test(rawName)) continue;
+        if (/^(grades|course|student|school|parent|teacher|may |june |the |100 |https|year|final|quarter|semester|marking|period)/i.test(rawName)) continue;
+        // Ignore lines where the part before colon looks like a date or time
+        if (/^\d{1,2}[\/\-]\d{1,2}/.test(rawName)) continue;
         const canonical = canonicalizeName(rawName);
         let credits = 1.0;
-        if (/driver/i.test(rawName))                          credits = 0.25;
-        if (/drug|alcohol|homeroom|study hall/i.test(rawName)) credits = 0;
+        if (/driver/i.test(rawName))                                    credits = 0.25;
+        if (/drug|alcohol|homeroom|study.?hall|math.?lab/i.test(rawName)) credits = 0;
+        if (/health/i.test(rawName) && !/mental|public/i.test(rawName)) credits = 0.5;
+        if (/physical.?education|^pe\s*\d/i.test(rawName))              credits = 0.5;
         currentCourse = {
           name:          rawName,
           canonicalName: canonical,
@@ -284,7 +299,11 @@ async function parseSchoologyPDF(pdfBuffer) {
   });
 
   if (deduped.length === 0) {
-    warnings.push('No courses parsed. The PDF layout may have changed. Review rawText manually.');
+    warnings.push(
+      'No courses found in this document. ' +
+      'This may not be a Schoology PDF, or the format has changed. ' +
+      'You can close this dialog and add courses manually.'
+    );
   }
 
   return {
@@ -292,6 +311,7 @@ async function parseSchoologyPDF(pdfBuffer) {
     schoolYear:    deriveSchoolYear(mpStartYear, mpEndYear),
     studentName,
     parseWarnings: warnings,
+    rawLineCount:  lines.length,
   };
 }
 
