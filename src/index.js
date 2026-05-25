@@ -2,6 +2,7 @@ require('dotenv').config();
 const express  = require('express');
 const session  = require('express-session');
 const cors     = require('cors');
+const path     = require('path');
 
 const { router: authRouter, passport } = require('./routes/auth');
 const gpaRouter    = require('./routes/gpa');
@@ -23,12 +24,21 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Serve frontend from public/
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
 app.use(authRouter);
 app.use(gpaRouter);
 app.use(rcRouter);
 app.use(courseRouter);
 
 app.get('/health', (req, res) => res.json({ status: 'ok', school: 'csw', version: '2.0' }));
+
+// SPA fallback — serve index.html for any non-API route
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/auth')) return next();
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+});
 
 app.use((err, req, res, next) => {
   if (err.code === 'LIMIT_FILE_SIZE')
@@ -37,5 +47,9 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message });
 });
 
-app.listen(PORT, () => console.log(`[atlas-gpa] http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`[atlas-gpa] http://localhost:${PORT}`);
+  console.log(`[atlas-gpa] Frontend: http://localhost:${PORT}/`);
+  console.log(`[atlas-gpa] Health:   http://localhost:${PORT}/health`);
+});
 module.exports = app;
