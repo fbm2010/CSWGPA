@@ -1,0 +1,4 @@
+.env
+uploads/
+atlas_gpa.db
+node_modules/
