@@ -112,10 +112,7 @@ function formatProfile(user) {
 
 router.get('/auth/google', (req, res, next) => {
   if (!process.env.GOOGLE_OAUTH_CLIENT_ID) {
-    return res.status(503).json({
-      error: 'Google OAuth not configured',
-      hint:  'Set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET in .env',
-    });
+    return res.redirect('/?auth_error=google_disabled');
   }
   passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
 });
@@ -123,9 +120,17 @@ router.get('/auth/google', (req, res, next) => {
 router.get('/auth/google/callback',
   passport.authenticate('google', { session: false, failureRedirect: '/?auth_error=1' }),
   (req, res) => {
-    const token = issueJWT(req.user);
-    const base  = process.env.FRONTEND_URL || '/';
-    res.redirect(`${base}?token=${token}&needs_year=${req.user.needs_high_school_year}`);
+    try {
+      const token = issueJWT(req.user);
+      const frontendBase = process.env.FRONTEND_URL || '';
+      // If FRONTEND_URL is same origin as backend (localhost:3000), use relative redirect
+      const redirectBase = (frontendBase && frontendBase !== 'http://localhost:3000')
+        ? frontendBase : '';
+      res.redirect(`${redirectBase}/?token=${token}`);
+    } catch (err) {
+      console.error('[auth/callback]', err.message);
+      res.redirect('/?auth_error=1');
+    }
   }
 );
 

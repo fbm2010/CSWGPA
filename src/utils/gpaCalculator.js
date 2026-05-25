@@ -48,6 +48,15 @@ const PHASE_BONUS = {
 };
 
 /**
+ * Where phase bonuses are applied.
+ * Finals, midterms, and marking period grades are components that feed INTO
+ * the Course Grade percentage. The phase bonus (+0.25/+0.50/+1.00) is applied
+ * exactly ONCE to the final Course Grade quality points. There is no
+ * double-weighting of individual assessment components.
+ */
+const PHASE_BONUS_APPLIES_TO = 'course_grade_only';
+
+/**
  * Build GPA exclusion list from env + hardcoded defaults.
  * Excludes: Driver Ed, Drug & Alcohol, Homeroom, Study Hall, N/A courses.
  */
@@ -115,6 +124,13 @@ function getPhaseBonus(phase) {
 /**
  * Calculate GPA from an array of course objects.
  *
+ * CSW Phase Bonus rule:
+ *   Finals, midterms, and marking period grades are components that feed
+ *   INTO the Course Grade percentage. The phase bonus (Ph4 +0.25, Ph5 +0.50,
+ *   Ph6 +1.00) is applied EXACTLY ONCE to the final Course Grade quality
+ *   points. Individual assessment components (midterms, finals, MP grades)
+ *   do NOT receive their own phase weighting — there is no double-weighting.
+ *
  * @param {Array<{
  *   name: string,
  *   grade: string|number,
@@ -123,10 +139,20 @@ function getPhaseBonus(phase) {
  *   schoolYear?: string
  * }>} courses
  * @param {{ excludeList?: string[] }} options
+ * @returns {{
+ *   unweightedGPA: number|null,
+ *   weightedGPA: number|null,
+ *   totalCredits: number,
+ *   excludedCredits: number,
+ *   allCredits: number,
+ *   courseCount: number,
+ *   includedCourses: Array,
+ *   excludedCourses: Array
+ * }}
  */
 function calculateGPA(courses, options = {}) {
   const excludeList = options.excludeList || buildExcludeList();
-  let uwSum = 0, wSum = 0, totalCredits = 0;
+  let uwSum = 0, wSum = 0, totalCredits = 0, excludedCredits = 0;
   const included = [], excluded = [];
 
   for (const course of courses) {
@@ -135,7 +161,7 @@ function calculateGPA(courses, options = {}) {
     const bonus = getPhaseBonus(course.phase);
     const { excluded: isExc, reason } = isExcluded(course.name, excludeList);
 
-    if (isExc) { excluded.push({ ...course, exclusionReason: reason }); continue; }
+    if (isExc) { excluded.push({ ...course, exclusionReason: reason }); excludedCredits += credits; continue; }
     if (isPassFail || points === null) {
       excluded.push({ ...course, exclusionReason: isPassFail ? 'Pass/Fail or N/A' : 'Unrecognized grade' });
       continue;
@@ -160,13 +186,15 @@ function calculateGPA(courses, options = {}) {
 
   const round4 = n => Math.round(n * 10000) / 10000;
   return {
-    unweightedGPA: totalCredits > 0 ? round4(uwSum / totalCredits) : null,
-    weightedGPA:   totalCredits > 0 ? round4(wSum  / totalCredits) : null,
+    unweightedGPA:   totalCredits > 0 ? round4(uwSum / totalCredits) : null,
+    weightedGPA:     totalCredits > 0 ? round4(wSum  / totalCredits) : null,
     totalCredits,
-    courseCount: included.length,
+    excludedCredits,
+    allCredits:      totalCredits + excludedCredits,
+    courseCount:     included.length,
     includedCourses: included,
     excludedCourses: excluded,
   };
 }
 
-module.exports = { calculateGPA, gradeToPoints, getPhaseBonus, isExcluded, buildExcludeList };
+module.exports = { calculateGPA, gradeToPoints, getPhaseBonus, isExcluded, buildExcludeList, PHASE_BONUS_APPLIES_TO };

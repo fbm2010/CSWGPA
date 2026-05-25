@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>ATLAS GPA</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Outfit:wght@300;400;500;600&family=Crimson+Pro:ital,wght@0,300;1,300&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -206,6 +207,27 @@ select.inp-base option{background:#0c1628;color:var(--text)}
 .toast-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
 footer{border-top:.5px solid var(--border);padding:1.5rem 0;text-align:center;font-size:11px;color:var(--faint)}
 
+/* ── PROFILE TAB ── */
+.profile-card{background:var(--card);border:.5px solid var(--border);border-radius:var(--r);padding:1.2rem 1.4rem;margin-bottom:1.2rem}
+.profile-card-title{font-family:'Cinzel',serif;font-size:.9rem;font-weight:600;color:var(--star);letter-spacing:.1em;margin-bottom:.9rem;display:flex;align-items:center;gap:10px}
+.profile-field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:.4rem}
+.profile-field{display:flex;flex-direction:column;gap:5px}
+.profile-label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.year-pill-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:.9rem}
+.year-pill-btn{height:44px;border-radius:var(--pill);border:.5px solid var(--border-hi);background:transparent;font-family:'Outfit',sans-serif;font-size:12.5px;letter-spacing:.06em;color:var(--muted);cursor:pointer;transition:all .18s}
+.year-pill-btn:hover{border-color:var(--blue);color:var(--blue)}
+.year-pill-btn.active{background:var(--blue-2);color:var(--star);border-color:var(--blue);box-shadow:0 0 14px rgba(74,180,255,.18)}
+.timeline-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:.6rem}
+.timeline-chip{font-size:11px;letter-spacing:.06em;color:var(--muted);background:rgba(74,180,255,.06);border:.5px solid var(--border);border-radius:var(--pill);padding:3px 10px}
+.timeline-chip.current{color:var(--blue);border-color:rgba(74,180,255,.35);background:rgba(74,180,255,.1)}
+.import-pill-grid{display:flex;gap:8px;margin-bottom:.5rem}
+.import-pill-btn{height:38px;padding:0 20px;border-radius:var(--pill);border:.5px solid var(--border-hi);background:transparent;font-family:'Outfit',sans-serif;font-size:12px;letter-spacing:.06em;color:var(--muted);cursor:pointer;transition:all .18s}
+.import-pill-btn:hover{border-color:var(--blue);color:var(--blue)}
+.import-pill-btn.active{background:var(--blue-2);color:var(--star);border-color:var(--blue);box-shadow:0 0 14px rgba(74,180,255,.18)}
+.btn-danger{height:38px;padding:0 20px;border-radius:var(--pill);border:.5px solid rgba(224,90,90,.4);background:transparent;font-family:'Outfit',sans-serif;font-size:12px;letter-spacing:.06em;color:var(--red);cursor:pointer;transition:all .18s}
+.btn-danger:hover{background:rgba(224,90,90,.1)}
+@media(max-width:600px){.profile-field-grid,.year-pill-grid{grid-template-columns:1fr}}
+
 /* ── AUTOCOMPLETE ── */
 #acDropdown{position:fixed;z-index:9999;display:none;background:#0c1628;border:.5px solid rgba(74,180,255,.38);border-radius:10px;overflow-y:auto;max-height:220px;box-shadow:0 12px 40px rgba(0,0,0,.55);min-width:260px}
 #acDropdown::-webkit-scrollbar{width:4px}
@@ -221,9 +243,11 @@ footer{border-top:.5px solid var(--border);padding:1.5rem 0;text-align:center;fo
 @keyframes acFlash{0%{border-color:var(--green);box-shadow:0 0 0 2px rgba(77,201,148,.25)}100%{border-color:rgba(74,180,255,.22);box-shadow:none}}
 .course-row.ac-filled{animation:acFlash .6s ease}
 
-/* ── EXCLUDED COURSE ROW ── */
-.inp-base:disabled{opacity:.35;cursor:not-allowed;background:rgba(224,90,90,.04)}
+/* ── EXCLUDED / PASS-FAIL COURSE ROW ── */
+.inp-base:disabled{opacity:.35;cursor:not-allowed;background:rgba(224,90,90,.04);border-color:rgba(224,90,90,.2)}
 .excl-badge{display:inline-flex;align-items:center;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--red);border:.5px solid rgba(224,90,90,.35);background:rgba(224,90,90,.07);padding:2px 7px;border-radius:var(--pill);white-space:nowrap}
+.pf-badge{display:inline-flex;align-items:center;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);border:.5px solid rgba(201,147,58,.4);background:rgba(201,147,58,.07);padding:2px 7px;border-radius:var(--pill);white-space:nowrap}
+.pf-grade-wrap{display:flex;align-items:center;gap:5px}
 
 /* ── HISTORY CLEAR BTN ── */
 .btn-hist-clear{height:24px;padding:0 10px;border-radius:var(--pill);border:.5px solid rgba(224,90,90,.35);background:transparent;font-family:'Outfit',sans-serif;font-size:10px;letter-spacing:.06em;color:var(--red);cursor:pointer;transition:all .18s}
@@ -332,12 +356,12 @@ footer{border-top:.5px solid var(--border);padding:1.5rem 0;text-align:center;fo
 </div>
 <div class="modal-overlay" id="exportModal">
   <div class="modal">
-    <div class="modal-title">Export Summary</div>
+    <div class="modal-title">Export Report</div>
     <div class="export-box" id="exportBox"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-      <button class="btn-primary" id="btnCopyExport" style="flex:1;height:38px;border-radius:8px;justify-content:center;min-width:120px">Copy to Clipboard</button>
+      <button class="btn-primary" id="btnDownloadPDF" style="flex:1;height:38px;border-radius:8px;justify-content:center;min-width:120px">↓ Download PDF</button>
+      <button class="btn-ghost" id="btnCopyExport" style="flex:1;height:38px;border-radius:8px;justify-content:center;min-width:120px">Copy Text</button>
       <button class="btn-ghost" id="btnDownloadTxt" style="flex:1;height:38px;border-radius:8px;justify-content:center;min-width:120px">Download .txt</button>
-      <button class="btn-ghost" id="btnDownloadPDF" style="flex:1;height:38px;border-radius:8px;justify-content:center;min-width:120px">Download PDF</button>
     </div>
     <button class="modal-close" id="exportClose">Close</button>
   </div>
@@ -347,9 +371,12 @@ footer{border-top:.5px solid var(--border);padding:1.5rem 0;text-align:center;fo
 
 <div class="modal-overlay" id="pdfModal">
   <div class="modal">
-    <div class="modal-title">Schoology PDF Import</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+      <div class="modal-title" style="margin:0">Report Card Import</div>
+      <span id="ollamaStatusBadge" style="font-size:10px;letter-spacing:.05em;padding:2px 9px;border-radius:20px;border:.5px solid rgba(74,180,255,.3);color:var(--muted);background:rgba(74,180,255,.05)">checking…</span>
+    </div>
     <div id="pdfPreviewContent">
-      <div style="text-align:center;padding:2rem;color:var(--muted);font-size:13px">Parsing PDF…</div>
+      <div style="text-align:center;padding:2rem;color:var(--muted);font-size:13px">Reading document…</div>
     </div>
     <div style="display:flex;gap:8px" id="pdfModalActions">
       <button class="btn-primary" id="btnConfirmImport" style="flex:1;height:38px;border-radius:8px;justify-content:center">Import Courses</button>
@@ -365,6 +392,7 @@ footer{border-top:.5px solid var(--border);padding:1.5rem 0;text-align:center;fo
     <button class="sem-tab active" data-tab="gpa">⊕ GPA Calculator</button>
     <button class="sem-tab" data-tab="weighted">⚖ Weighted GPA</button>
     <button class="sem-tab" data-tab="cgpa">∑ Cumulative GPA</button>
+    <button class="sem-tab" data-tab="profile">◉ My Profile</button>
   </div>
   <div class="tab-divider"></div>
 
@@ -495,16 +523,6 @@ footer{border-top:.5px solid var(--border);padding:1.5rem 0;text-align:center;fo
       </button>
       <div class="settings-body" id="settingsBody">
         <div class="settings-grid">
-          <div class="settings-field" style="grid-column:1/-1">
-            <label class="settings-label">High School Year</label>
-            <select class="inp-base" id="hsYearSelect">
-              <option value="">— Select —</option>
-              <option value="Freshman">Freshman (9th)</option>
-              <option value="Sophomore">Sophomore (10th)</option>
-              <option value="Junior">Junior (11th)</option>
-              <option value="Senior">Senior (12th)</option>
-            </select>
-          </div>
           <div class="settings-field">
             <label class="settings-label">GPA Scale</label>
             <select class="inp-base" disabled><option>CSW 4.0 / 5.0</option></select>
@@ -659,6 +677,66 @@ footer{border-top:.5px solid var(--border);padding:1.5rem 0;text-align:center;fo
     </div>
   </div>
 
+  <!-- ══ TAB 4: MY PROFILE ══ -->
+  <div id="tab-profile" class="tab-panel">
+    <div class="hero">
+      <div class="hero-badge" style="border-color:rgba(155,127,244,.35);background:rgba(155,127,244,.06);color:var(--purple)"><div class="badge-dot" style="background:var(--purple);box-shadow:0 0 7px var(--purple)"></div>My Profile</div>
+      <h1 class="hero-title">My <span style="font-size:clamp(1.2rem,3vw,2rem);letter-spacing:.15em;font-weight:400;color:var(--purple)">Profile</span></h1>
+      <div class="hero-rule" style="background:linear-gradient(90deg,transparent,var(--purple),transparent)"></div>
+      <p class="hero-tag" style="color:var(--muted)">Manage your account and preferences</p>
+    </div>
+
+    <div class="profile-card section">
+      <div class="profile-card-title">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="5" r="3" stroke="currentColor" stroke-width="1.1"/><path d="M1 13c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+        Student Info
+      </div>
+      <div class="profile-field-grid">
+        <div class="profile-field"><div class="profile-label">Name</div><div id="profileName" style="font-size:13.5px;color:var(--text)">—</div></div>
+        <div class="profile-field"><div class="profile-label">Email</div><div id="profileEmail" style="font-size:13px;color:var(--muted)">—</div></div>
+        <div class="profile-field"><div class="profile-label">School</div><div style="font-size:13px;color:var(--text)">Charter School of Wilmington</div></div>
+        <div class="profile-field"><div class="profile-label">Account</div><div id="profileGoogleStatus" style="font-size:12px;color:var(--faint)">Not signed in</div></div>
+      </div>
+    </div>
+
+    <div class="profile-card section">
+      <div class="profile-card-title">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="12" height="10" rx="2" stroke="currentColor" stroke-width="1.1"/><path d="M4 1v2M10 1v2M1 6h12" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+        Academic Year
+      </div>
+      <div class="year-pill-grid" id="yearPillGrid">
+        <button class="year-pill-btn" data-year="Freshman">Freshman <span style="opacity:.5;font-size:10px">9th</span></button>
+        <button class="year-pill-btn" data-year="Sophomore">Sophomore <span style="opacity:.5;font-size:10px">10th</span></button>
+        <button class="year-pill-btn" data-year="Junior">Junior <span style="opacity:.5;font-size:10px">11th</span></button>
+        <button class="year-pill-btn" data-year="Senior">Senior <span style="opacity:.5;font-size:10px">12th</span></button>
+      </div>
+      <div class="timeline-bar" id="profileTimeline"></div>
+    </div>
+
+    <div class="profile-card section">
+      <div class="profile-card-title">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/><rect x="1" y="10" width="12" height="3" rx="1" stroke="currentColor" stroke-width="1.1"/></svg>
+        Import Method
+      </div>
+      <div class="import-pill-grid">
+        <button class="import-pill-btn active" id="importPillManual">Manual Entry</button>
+        <button class="import-pill-btn" id="importPillPDF">PDF Import</button>
+      </div>
+      <div style="font-size:11px;color:var(--faint);margin-top:.4rem">Choose how you prefer to add course grades</div>
+    </div>
+
+    <div class="profile-card section">
+      <div class="profile-card-title">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 1H3a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2V5L9 1z" stroke="currentColor" stroke-width="1.1"/><path d="M9 1v4h4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+        Account Actions
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn-ghost" id="profileSignOut" style="height:38px;border-radius:8px;padding:0 18px">Sign Out</button>
+        <button class="btn-danger" id="profileClearData">Clear All Data</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <footer><div class="wrap">ATLAS GPA — CSW Edition · Independent academic tool · Not affiliated with College Board or any school</div></footer>
@@ -706,7 +784,35 @@ const CSW_SCALE=[
 const PHASE_BONUS={'none':0,'3':0,'4':.25,'5':.5,'6':1.0};
 const PHASE_LABELS={'none':'Non-Phased','3':'Phase 3 · College Prep','4':'Phase 4 · Accelerated','5':'Phase 5 · Honors','6':'AP / Dual Enrollment'};
 const PHASE_COLORS={'none':'var(--pn)','3':'var(--p3)','4':'var(--p4)','5':'var(--p5)','6':'var(--p6)'};
-const EXCLUDED_PATTERNS=['driver','drug','alcohol','homeroom','study hall'];
+const GPA_EXCLUDED_COURSES=[
+  // Driver Education — all common spellings
+  'driver ed','drivers ed','driver s ed','driving ed',
+  'driver education','drivers education','driver s education',
+  'driver training','drivers training',
+  // Drug & Alcohol — all variants (& normalized to space)
+  'drug and alcohol','drug   alcohol','drug alcohol',
+  'drug and alcohol education','drug and alcohol awareness',
+  'drug   alcohol education','drug   alcohol awareness',
+  'alcohol awareness','drug awareness','alcohol education',
+  // Homeroom
+  'homeroom','home room',
+  // Study Hall
+  'study hall',
+  // Other non-GPA admin courses
+  'math lab','lab assistant',
+  // Health & PE
+  'health','physical education','physical education 1','physical education 2',
+  'pe 1','pe 2',
+];
+// Normalise a course name: lowercase, all non-word chars → space, collapse spaces
+function normCourseName(s){return(s||'').toLowerCase().replace(/[^\w\s]/g,' ').replace(/\s+/g,' ').trim();}
+function isCourseExcluded(name){
+  const n=normCourseName(name);
+  return GPA_EXCLUDED_COURSES.some(p=>{
+    const np=normCourseName(p);
+    return n===np||n.startsWith(np+' ')||n.endsWith(' '+np)||n.includes(' '+np+' ')||n.includes(np);
+  });
+}
 
 function uid(){return Math.random().toString(36).slice(2,8)}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
@@ -727,7 +833,6 @@ function gradeToPoints(g){
 function phaseBonus(p){return PHASE_BONUS[String(p)]||0}
 function phaseColor(p){return PHASE_COLORS[String(p)]||'var(--pn)'}
 function emptyRows(){return Array.from({length:8},()=>({id:uid(),name:'',grade:'',credits:'1',phase:'none'}))}
-function isCourseExcluded(name){const n=(name||'').toLowerCase();return EXCLUDED_PATTERNS.some(p=>n.includes(p))}
 
 // ── School Year logic ────────────────────────────────────────────────────
 function getCurrentSchoolYear(){
@@ -739,7 +844,16 @@ function getSchoolYearTabs(grade,existingTabs){
   const [startY]=current.split('-').map(Number);
   const gradeOffset={'Freshman':0,'Sophomore':1,'Junior':2,'Senior':3};
   const offset=gradeOffset[grade];
-  if(offset===undefined) return existingTabs||[{id:uid(),name:'Year 1',courses:emptyRows()},{id:uid(),name:'Year 2',courses:emptyRows()},{id:uid(),name:'Year 3',courses:emptyRows()},{id:uid(),name:'Year 4',courses:emptyRows()}];
+  if(offset===undefined){
+    // No grade set — default to 4-year block ending with current year (Freshman→Senior)
+    const existing=existingTabs||[];
+    return Array.from({length:4},(_,i)=>{
+      const sy=startY-3+i;
+      const name=`${sy}-${sy+1}`;
+      const found=existing.find(t=>t.name===name);
+      return found||{id:uid(),name,courses:emptyRows()};
+    });
+  }
   const existing=existingTabs||[];
   return Array.from({length:4},(_,i)=>{
     const sy=startY-offset+i;
@@ -759,27 +873,36 @@ function nextSchoolYear(tabs){
 let state={
   school:'Charter School of Wilmington',
   highSchoolYear:'',
-  schoolYears:[{id:'sy1',name:getCurrentSchoolYear(),courses:emptyRows()}],
-  activeMP:0,activeMainTab:'gpa',
+  schoolYears:[],
+  activeMP:undefined,activeMainTab:'gpa',
   scoir:{uw:'',w:'',credits:'',date:''},
-  history:[]
+  history:[],
+  preferredImportMethod:'manual'
 };
 
+function fmtCr(n){const v=parseFloat(n);if(!v&&v!==0)return'0';const s=parseFloat(v.toFixed(4)).toString();return s;}
 function calcMPGPA(courses){
-  let uwS=0,wS=0,cr=0,cnt=0;
+  let uwS=0,wS=0,cr=0,pfCr=0,cnt=0;
   courses.forEach(c=>{
-    if(isCourseExcluded(c.name))return;
+    if(isCourseExcluded(c.name)){pfCr+=parseFloat(c.credits)||0;return;}
     const pts=gradeToPoints(c.grade),crd=parseFloat(c.credits)||0;
-    if(pts===null||!crd)return;cnt++;cr+=crd;uwS+=pts*crd;wS+=(pts+phaseBonus(c.phase))*crd
+    if(pts===null||!crd)return;cnt++;cr+=crd;uwS+=pts*crd;wS+=(pts+phaseBonus(c.phase))*crd;
   });
-  if(!cr)return{uw:null,w:null,credits:0,count:cnt};
-  return{uw:uwS/cr,w:wS/cr,credits:cr,count:cnt};
+  const totCr=cr+pfCr;
+  if(!cr)return{uw:null,w:null,credits:0,totalCredits:totCr,count:cnt};
+  return{uw:uwS/cr,w:wS/cr,credits:cr,totalCredits:totCr,count:cnt};
 }
 function calcCumGPA(){
-  let uwS=0,wS=0,totCr=0,totCnt=0;
-  state.schoolYears.forEach(mp=>{const r=calcMPGPA(mp.courses);if(r.credits){uwS+=r.uw*r.credits;wS+=r.w*r.credits;totCr+=r.credits}totCnt+=r.count});
-  if(!totCr)return{uw:null,w:null,credits:0,count:totCnt};
-  return{uw:uwS/totCr,w:wS/totCr,credits:totCr,count:totCnt};
+  let uwS=0,wS=0,totCr=0,totPfCr=0,totCnt=0;
+  state.schoolYears.forEach(mp=>{
+    const r=calcMPGPA(mp.courses);
+    if(r.credits){uwS+=r.uw*r.credits;wS+=r.w*r.credits;totCr+=r.credits;}
+    totPfCr+=(r.totalCredits-r.credits);
+    totCnt+=r.count;
+  });
+  const allCr=totCr+totPfCr;
+  if(!totCr)return{uw:null,w:null,credits:0,totalCredits:allCr,count:totCnt};
+  return{uw:uwS/totCr,w:wS/totCr,credits:totCr,totalCredits:allCr,count:totCnt};
 }
 function getAllCourses(){
   const all=[];
@@ -797,6 +920,7 @@ function switchMainTab(tab){
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+tab));
   if(tab==='weighted')renderWeightedTab();
   if(tab==='cgpa')renderCGPATab();
+  if(tab==='profile')renderProfileTab();
 }
 document.querySelectorAll('#mainTabsRow .sem-tab').forEach(btn=>btn.addEventListener('click',()=>switchMainTab(btn.dataset.tab)));
 
@@ -829,25 +953,30 @@ function renderRows(){
   mp.courses.forEach((c,i)=>{
     const row=document.createElement('div');row.className='course-row';
     const excl=isCourseExcluded(c.name);
-    const accent=excl?'var(--red)':phaseColor(c.phase);
+    const accent=excl?'var(--amber)':phaseColor(c.phase);
     const pts=gradeToPoints(c.grade);
     row.style.cssText=`--row-accent:${accent}`;
+    row.dataset.excl=excl?'1':'0';
     if(!excl&&pts!==null&&c.grade)row.classList.add('has-grade');
-    if(excl)row.classList.add('has-grade');
-    const gradeVal=excl?'':esc(c.grade);
-    const gradeExtra=excl?'disabled placeholder="Excluded"':'placeholder="A, B+, 91…"';
-    const gradeArea=excl
-      ?`<div style="display:flex;align-items:center;gap:6px"><input class="inp-base" type="text" value="" ${gradeExtra} data-field="grade" data-i="${i}" style="text-align:center;flex:1"/><span class="excl-badge">Excluded</span></div>`
-      :`<input class="inp-base" type="text" ${gradeExtra} value="${gradeVal}" data-field="grade" data-i="${i}" style="text-align:center"/>`;
+    if(excl&&c.grade)row.classList.add('has-grade');
+    // Grade area: static "No GPA" label for excluded courses, text input for regular
+    let gradeArea,phaseArea;
+    if(excl){
+      gradeArea=`<div class="pf-grade-wrap"><span class="pf-badge" style="flex:1;justify-content:center">No GPA</span></div>`;
+      phaseArea=`<span class="inp-base" style="display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.78rem;pointer-events:none">Non-Phased</span>`;
+    }else{
+      gradeArea=`<input class="inp-base" type="text" placeholder="A, B+, 91…" value="${esc(c.grade)}" data-field="grade" data-i="${i}" style="text-align:center"/>`;
+      phaseArea=`<select class="inp-base" data-field="phase" data-i="${i}">
+        ${Object.entries(PHASE_LABELS).map(([v,l])=>`<option value="${v}"${c.phase===v?' selected':''}>${l}</option>`).join('')}
+      </select>`;
+    }
     row.innerHTML=`
       <input class="inp-base" type="text" placeholder="Course name…" value="${esc(c.name)}" data-field="name" data-i="${i}"/>
       ${gradeArea}
-      <input class="inp-base" type="number" min=".5" max="4" step=".5" value="${c.credits}" data-field="credits" data-i="${i}" style="text-align:center"/>
-      <select class="inp-base" data-field="phase" data-i="${i}"${excl?' disabled':''}>
-        ${Object.entries(PHASE_LABELS).map(([v,l])=>`<option value="${v}"${c.phase===v?' selected':''}>${l}</option>`).join('')}
-      </select>
+      <input class="inp-base" type="number" min=".25" max="4" step=".25" value="${esc(c.credits)}" data-field="credits" data-i="${i}" style="text-align:center"/>
+      ${phaseArea}
       <button class="btn-remove" data-i="${i}" title="Remove">×</button>`;
-    row.querySelectorAll('[data-field]:not(:disabled)').forEach(el=>{el.addEventListener('input',handleInput);el.addEventListener('change',handleInput)});
+    row.querySelectorAll('[data-field]').forEach(el=>{el.addEventListener('input',handleInput);el.addEventListener('change',handleInput)});
     row.querySelector('.btn-remove').addEventListener('click',e=>{mp.courses.splice(parseInt(e.currentTarget.dataset.i),1);saveLocal();renderAll()});
     container.appendChild(row);
   });
@@ -860,30 +989,30 @@ function handleInput(e){
   if(!row)return;
   if(field==='name'){
     const excl=isCourseExcluded(mp.courses[i].name);
-    // Update grade input exclusion state in real-time
-    const gradeInp=row.querySelector('[data-field="grade"]');
-    if(gradeInp){
-      if(excl){gradeInp.disabled=true;gradeInp.value='';gradeInp.placeholder='Excluded';mp.courses[i].grade='';
-        let badge=row.querySelector('.excl-badge');if(!badge){badge=document.createElement('span');badge.className='excl-badge';badge.textContent='Excluded';gradeInp.parentNode.appendChild(badge);}
-      }else{gradeInp.disabled=false;gradeInp.placeholder='A, B+, 91…';
-        const badge=row.querySelector('.excl-badge');if(badge)badge.remove();
-      }
+    const prevExcl=row.dataset.excl==='1';
+    if(excl!==prevExcl){
+      // Exclusion status changed — clear grade and phase, re-render
+      mp.courses[i].grade='';
+      mp.courses[i].phase='none';
+      renderRows();renderResults();return;
     }
-    const phSel=row.querySelector('[data-field="phase"]');if(phSel)phSel.disabled=excl;
-    row.style.setProperty('--row-accent',excl?'var(--red)':phaseColor(mp.courses[i].phase));
-    row.classList.toggle('has-grade',excl||(gradeToPoints(mp.courses[i].grade)!==null&&!!mp.courses[i].grade));
+    // Same exclusion state — lightweight in-place update
+    row.style.setProperty('--row-accent',excl?'var(--amber)':phaseColor(mp.courses[i].phase));
+    row.classList.toggle('has-grade',excl?(!!mp.courses[i].grade):(gradeToPoints(mp.courses[i].grade)!==null&&!!mp.courses[i].grade));
   }else{
-    row.style.setProperty('--row-accent',phaseColor(mp.courses[i].phase));
-    const pts=gradeToPoints(mp.courses[i].grade);row.classList.toggle('has-grade',pts!==null&&!!mp.courses[i].grade);
+    const excl=isCourseExcluded(mp.courses[i].name);
+    row.style.setProperty('--row-accent',excl?'var(--amber)':phaseColor(mp.courses[i].phase));
+    const pts=gradeToPoints(mp.courses[i].grade);
+    row.classList.toggle('has-grade',excl?(!!mp.courses[i].grade):(pts!==null&&!!mp.courses[i].grade));
   }
 }
 function renderResults(){
   const mp=state.schoolYears[state.activeMP];const sr=calcMPGPA(mp?.courses||[]);
   document.getElementById('mpUW').textContent=fmt(sr.uw);document.getElementById('mpW').textContent=fmt(sr.w);
-  document.getElementById('mpCredits').textContent=sr.credits.toFixed(1).replace('.0','');document.getElementById('mpCount').textContent=sr.count;
+  document.getElementById('mpCredits').textContent=fmtCr(sr.totalCredits||0);document.getElementById('mpCount').textContent=sr.count;
   const cr=calcCumGPA();
   document.getElementById('cumUW').innerHTML=`${fmt(cr.uw)}<span>/4.0</span>`;document.getElementById('cumW').innerHTML=`${fmt(cr.w)}<span>/5.0</span>`;
-  document.getElementById('statCredits').textContent=cr.credits.toFixed(1).replace('.0','');document.getElementById('statCourses').textContent=cr.count;document.getElementById('statMPs').textContent=state.schoolYears.length;
+  document.getElementById('statCredits').textContent=fmtCr(cr.totalCredits||0);document.getElementById('statCourses').textContent=cr.count;document.getElementById('statMPs').textContent=state.schoolYears.length;
 }
 function renderGradeTable(){
   document.getElementById('gradeTableBody').innerHTML=CSW_SCALE.map(r=>`
@@ -933,7 +1062,7 @@ function renderSchoolList(){
 function renderWeightedTab(){
   const cr=calcCumGPA();
   document.getElementById('wCumUW').innerHTML=`${fmt(cr.uw)}<span>/4.0</span>`;document.getElementById('wCumW').innerHTML=`${fmt(cr.w)}<span>/5.0</span>`;
-  document.getElementById('wStatCredits').textContent=cr.credits.toFixed(1).replace('.0','');document.getElementById('wStatCourses').textContent=cr.count;
+  document.getElementById('wStatCredits').textContent=fmtCr(cr.credits);document.getElementById('wStatCourses').textContent=cr.count;
   const all=getAllCourses();let tb=0;all.forEach(c=>tb+=c.bonus);
   document.getElementById('wStatBonus').textContent=all.length?fmt(tb/all.length):'0.00';
   const container=document.getElementById('weightedMPList');container.innerHTML='';
@@ -944,7 +1073,7 @@ function renderWeightedTab(){
     const mpGPA=calcMPGPA(mp.courses);const sec=document.createElement('div');sec.className='w-mp-section';
     sec.innerHTML=`<div class="w-mp-header"><span class="w-mp-name">${esc(mp.name)}</span><div class="w-mp-gpa"><span>UW: <span>${fmt(mpGPA.uw)}</span></span><span>W: <span style="color:var(--purple)">${fmt(mpGPA.w)}</span></span><span>${mpGPA.credits} CR</span></div></div>`
     +courses.map(c=>{const pts=gradeToPoints(c.grade),bonus=phaseBonus(c.phase),crd=parseFloat(c.credits)||0,pc=phaseColor(c.phase);
-      return`<div class="w-course-row"><span style="color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(c.name)}">${esc(c.name)||'Unnamed'}</span><span style="text-align:center;font-family:'Cinzel',serif;font-weight:600;font-size:.82rem;color:${pc}">${esc(c.grade)}</span><span style="text-align:center;color:var(--muted)">${crd}</span><span style="color:${pc};font-size:11px;text-align:center">${PHASE_LABELS[c.phase]||'—'}</span><span class="w-uw">${pts!==null?pts.toFixed(1):'—'}</span><span class="w-wt">${pts!==null?(pts+bonus).toFixed(2):'—'}</span></div>`
+      return`<div class="w-course-row"><span style="color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(c.name)}">${esc(c.name)||'Unnamed'}</span><span style="text-align:center;font-family:'Cinzel',serif;font-weight:600;font-size:.82rem;color:${pc}">${esc(c.grade)}</span><span style="text-align:center;color:var(--muted)">${fmtCr(crd)}</span><span style="color:${pc};font-size:11px;text-align:center">${PHASE_LABELS[c.phase]||'—'}</span><span class="w-uw">${pts!==null?pts.toFixed(1):'—'}</span><span class="w-wt">${pts!==null?(pts+bonus).toFixed(2):'—'}</span></div>`
     }).join('');
     container.appendChild(sec);
   });
@@ -957,13 +1086,58 @@ function renderCGPATab(){
   if(sUW!==null&&sCr>0&&nCr>0)pUW=(sUW*sCr+nUW)/(sCr+nCr);else if(sUW===null&&nCr>0)pUW=nUW/nCr;
   if(sW!==null&&sCr>0&&nCr>0)pW=(sW*sCr+nW)/(sCr+nCr);else if(sW===null&&nCr>0)pW=nW/nCr;
   document.getElementById('projNewUW').innerHTML=`${fmt(pUW)}<span>/4.0</span>`;document.getElementById('projNewW').innerHTML=`${fmt(pW)}<span>/5.0</span>`;
-  document.getElementById('projCreditsNew').textContent=nCr.toFixed(1).replace('.0','');document.getElementById('projCreditsTotal').textContent=(sCr+nCr).toFixed(1).replace('.0','');
-  document.getElementById('projToGrad').textContent=Math.max(0,24.5-sCr-nCr).toFixed(1).replace('.0','');
+  document.getElementById('projCreditsNew').textContent=fmtCr(nCr);document.getElementById('projCreditsTotal').textContent=fmtCr(sCr+nCr);
+  document.getElementById('projToGrad').textContent=fmtCr(Math.max(0,24.5-sCr-nCr));
   const list=document.getElementById('cgpaCourseList');
   if(!all.length){list.innerHTML='<div class="cgpa-no-courses">No courses with grades yet. Add courses in the GPA Calculator tab.</div>';return;}
   list.innerHTML=all.map(c=>`<div class="w-course-row" style="margin-bottom:6px"><span style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.name)||'Unnamed'} <span style="color:var(--faint);font-size:10px">${esc(c.mpName)}</span></span><span style="text-align:center;font-family:'Cinzel',serif;font-size:.8rem;font-weight:600;color:${phaseColor(c.phase)}">${esc(c.grade)}</span><span style="text-align:center;color:var(--muted)">${c.cr}</span><span style="color:${phaseColor(c.phase)};font-size:11px;text-align:center">${PHASE_LABELS[c.phase]||'—'}</span><span class="w-uw">${c.pts.toFixed(1)}</span><span class="w-wt">${(c.pts+c.bonus).toFixed(2)}</span></div>`).join('');
 }
-function renderAll(){renderMPTabs();renderRows();renderResults();renderGradeTable();renderHistory();if(state.activeMainTab==='weighted')renderWeightedTab();if(state.activeMainTab==='cgpa')renderCGPATab();}
+function renderAll(){renderMPTabs();renderRows();renderResults();renderGradeTable();renderHistory();if(state.activeMainTab==='weighted')renderWeightedTab();if(state.activeMainTab==='cgpa')renderCGPATab();if(state.activeMainTab==='profile')renderProfileTab();}
+
+function setHighSchoolYear(yr){
+  state.highSchoolYear=yr;
+  if(yr)state.schoolYears=getSchoolYearTabs(yr,state.schoolYears);
+  saveLocal();renderAll();
+  const token=sessionStorage.getItem('atlas_token');
+  if(token&&yr){fetch('/api/me/high-school-year',{method:'PUT',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({highSchoolYear:yr})}).catch(()=>{});}
+}
+
+function renderProfileTab(){
+  // Year pills
+  document.querySelectorAll('#yearPillGrid .year-pill-btn').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.year===state.highSchoolYear);
+  });
+  // Timeline chips
+  const tl=document.getElementById('profileTimeline');
+  if(tl){
+    const years=['Freshman','Sophomore','Junior','Senior'];
+    const offsets={Freshman:0,Sophomore:1,Junior:2,Senior:3};
+    const curOffset=offsets[state.highSchoolYear];
+    const [startY]=getCurrentSchoolYear().split('-').map(Number);
+    tl.innerHTML=years.map((y,i)=>{
+      const sy=curOffset!==undefined?startY-curOffset+i:null;
+      const isCur=i===curOffset;
+      return`<span class="timeline-chip${isCur?' current':''}">${y}${sy?` · ${sy}-${sy+1}`:''}</span>`;
+    }).join('');
+  }
+  // Student info from cached user or local
+  const nameEl=document.getElementById('profileName');
+  const emailEl=document.getElementById('profileEmail');
+  const statusEl=document.getElementById('profileGoogleStatus');
+  if(currentUser){
+    if(nameEl)nameEl.textContent=currentUser.displayName||currentUser.email.split('@')[0];
+    if(emailEl)emailEl.textContent=currentUser.email;
+    if(statusEl)statusEl.innerHTML=`<span style="color:var(--green)">● Connected with Google</span>`;
+  } else {
+    if(nameEl)nameEl.textContent='—';
+    if(emailEl)emailEl.textContent='—';
+    if(statusEl)statusEl.innerHTML=`<a href="/auth/google" style="color:var(--blue);text-decoration:underline;text-decoration-color:rgba(74,180,255,.35)" title="Sign in with Google">Sign in with Google →</a>`;
+  }
+  // Import method pills
+  const im=state.preferredImportMethod||'manual';
+  document.getElementById('importPillManual')?.classList.toggle('active',im==='manual');
+  document.getElementById('importPillPDF')?.classList.toggle('active',im==='pdf');
+}
 
 // ── localStorage ─────────────────────────────────────────────────────────
 const STORE='atlas-gpa-csw-v4';
@@ -986,7 +1160,24 @@ function showToast(msg){const t=document.getElementById('toast');document.getEle
 
 loadLocal();
 if(!state.schoolYears||!state.schoolYears.length)state.schoolYears=getSchoolYearTabs(state.highSchoolYear||'');
-if(state.activeMP===undefined||state.activeMP>=state.schoolYears.length)state.activeMP=0;
+// Migrate old "Year N" tab names → real school years
+(function migrateLegacyYearTabs(){
+  const hasLegacy=state.schoolYears.some(t=>/^Year \d+$/.test(t.name));
+  if(!hasLegacy)return;
+  const current=getCurrentSchoolYear();
+  const [startY]=current.split('-').map(Number);
+  state.schoolYears=state.schoolYears.map((t,i)=>{
+    if(!/^Year \d+$/.test(t.name))return t;
+    const sy=startY-3+i;
+    return{...t,name:`${sy}-${sy+1}`};
+  });
+})();
+if(state.activeMP===undefined||state.activeMP>=state.schoolYears.length){
+  // Default to current school year tab
+  const cur=getCurrentSchoolYear();
+  const ci=state.schoolYears.findIndex(t=>t.name===cur);
+  state.activeMP=ci>=0?ci:state.schoolYears.length-1;
+}
 if(!state.highSchoolYear)state.highSchoolYear='';
 if(state.scoir){
   if(state.scoir.uw)document.getElementById('scoirUW').value=state.scoir.uw;
@@ -995,9 +1186,6 @@ if(state.scoir){
   if(state.scoir.date)document.getElementById('scoirDate').value=state.scoir.date;
 }
 document.getElementById('schoolDisplay').textContent=state.school;
-// Sync HS year selector
-const hsYearSel=document.getElementById('hsYearSelect');
-if(hsYearSel&&state.highSchoolYear)hsYearSel.value=state.highSchoolYear;
 renderAll();
 
 // ── BUTTON WIRING ─────────────────────────────────────────────────────────
@@ -1025,15 +1213,6 @@ document.getElementById('settingsToggle').addEventListener('click',()=>{
   document.getElementById('settingsChevron').classList.toggle('open');
 });
 
-document.getElementById('hsYearSelect').addEventListener('change',function(){
-  state.highSchoolYear=this.value;
-  if(this.value){state.schoolYears=getSchoolYearTabs(this.value,state.schoolYears);}
-  saveLocal();renderAll();
-  const token=sessionStorage.getItem('atlas_token');
-  if(token&&this.value){
-    fetch('/api/me/high-school-year',{method:'PUT',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({highSchoolYear:this.value})}).catch(()=>{});
-  }
-});
 
 document.getElementById('btnSave').addEventListener('click',()=>{
   const cum=calcCumGPA();
@@ -1050,6 +1229,39 @@ document.getElementById('btnProject').addEventListener('click',()=>{
   state.scoir.uw=document.getElementById('scoirUW').value;state.scoir.w=document.getElementById('scoirW').value;
   state.scoir.credits=document.getElementById('scoirCredits').value;state.scoir.date=document.getElementById('scoirDate').value;
   saveLocal();renderCGPATab();showToast('Projection updated ✦');
+});
+
+// ── PROFILE TAB WIRING ──────────────────────────────────────────────────
+document.querySelectorAll('#yearPillGrid .year-pill-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>setHighSchoolYear(btn.dataset.year));
+});
+document.getElementById('importPillManual').addEventListener('click',()=>{
+  state.preferredImportMethod='manual';saveLocal();
+  document.getElementById('importPillManual').classList.add('active');
+  document.getElementById('importPillPDF').classList.remove('active');
+  const token=sessionStorage.getItem('atlas_token');
+  if(token)fetch('/api/user/import_method',{method:'PUT',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({method:'manual'})}).catch(()=>{});
+});
+document.getElementById('importPillPDF').addEventListener('click',()=>{
+  state.preferredImportMethod='pdf';saveLocal();
+  document.getElementById('importPillPDF').classList.add('active');
+  document.getElementById('importPillManual').classList.remove('active');
+  const token=sessionStorage.getItem('atlas_token');
+  if(token)fetch('/api/user/import_method',{method:'PUT',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({method:'pdf'})}).catch(()=>{});
+});
+document.getElementById('profileSignOut').addEventListener('click',()=>{
+  try{sessionStorage.removeItem('atlas_token');}catch{}
+  currentUser=null;
+  const area=document.getElementById('authArea');
+  if(area)area.innerHTML=SIGNIN_BTN_HTML;
+  fetch('/auth/logout').catch(()=>{});
+  renderProfileTab();
+  showToast('Signed out');
+});
+document.getElementById('profileClearData').addEventListener('click',()=>{
+  if(!confirm('Clear ALL local GPA data? This cannot be undone.'))return;
+  try{localStorage.removeItem('atlas-gpa-csw-v4');localStorage.removeItem('atlas-gpa-csw-v3');}catch{}
+  location.reload();
 });
 
 function buildExportText(){
@@ -1088,25 +1300,82 @@ document.getElementById('btnDownloadTxt').addEventListener('click',()=>{
   showToast('Downloaded ✦');
 });
 
-document.getElementById('btnDownloadPDF').addEventListener('click',async()=>{
-  const token=sessionStorage.getItem('atlas_token');
-  const allCourses=[];
-  state.schoolYears.forEach(mp=>mp.courses.forEach(c=>{if(c.name||c.grade)allCourses.push({...c,schoolYear:mp.name})}));
-  if(!allCourses.length){showToast('No courses to export');return;}
+document.getElementById('btnDownloadPDF').addEventListener('click',()=>{
   try{
-    const res=await fetch('/api/gpa/report',{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify({courses:allCourses})});
-    if(res.ok){
-      const blob=await res.blob();
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement('a');a.href=url;
-      const cd=res.headers.get('content-disposition')||'';
-      const fn=cd.match(/filename="([^"]+)"/);
-      a.download=fn?fn[1]:`ATLAS_GPA_Report_${new Date().toISOString().split('T')[0]}.txt`;
-      a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-      showToast('Report downloaded ✦');
-    }else{throw new Error('Server error');}
-  }catch{
-    // Fallback to client-side download
+    const {jsPDF}=window.jspdf||{};
+    if(!jsPDF){showToast('PDF library not loaded');document.getElementById('btnDownloadTxt').click();return;}
+    const cum=calcCumGPA();
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'letter'});
+    const BG=[3,6,9],BLUE=[74,180,255],STAR=[216,234,255],MUTED=[90,122,154],FAINT=[42,61,85],WHITE=[255,255,255];
+    const W=215.9,H=279.4;
+    // Background
+    doc.setFillColor(...BG);doc.rect(0,0,W,H,'F');
+    // Header bar
+    doc.setFillColor(8,15,30);doc.rect(0,0,W,28,'F');
+    doc.setTextColor(...BLUE);doc.setFontSize(18);doc.setFont('helvetica','bold');
+    doc.text('ATLAS GPA',14,12);
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(...MUTED);
+    doc.text('Charter School of Wilmington · CSW Phase-Weighted System',14,18);
+    doc.setFontSize(7);doc.text(`Generated ${new Date().toLocaleString()}`,14,23);
+    // GPA summary cards
+    let y=36;
+    const cardW=43,cardH=22,gap=5,startX=14;
+    const cards=[
+      {label:'Unweighted GPA',val:cum.uw!=null?cum.uw.toFixed(2):'—',sub:'/4.0',col:BLUE},
+      {label:'Weighted GPA',  val:cum.w!=null?cum.w.toFixed(2):'—',  sub:'/5.0',col:[155,127,244]},
+      {label:'Total Credits', val:String(cum.credits||0),             sub:'credits',col:[82,216,240]},
+      {label:'Courses',       val:String(cum.count||0),               sub:'counted',col:[77,201,148]},
+    ];
+    cards.forEach((card,i)=>{
+      const x=startX+i*(cardW+gap);
+      doc.setFillColor(12,22,40);doc.roundedRect(x,y,cardW,cardH,2,2,'F');
+      doc.setDrawColor(...card.col);doc.setLineWidth(.4);doc.roundedRect(x,y,cardW,cardH,2,2,'S');
+      doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(...MUTED);doc.text(card.label,x+3,y+6);
+      doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor(...card.col);doc.text(card.val,x+3,y+16);
+      doc.setFontSize(6);doc.setFont('helvetica','normal');doc.setTextColor(...MUTED);doc.text(card.sub,x+3+doc.getTextWidth(card.val)+1,y+16);
+    });
+    y+=cardH+10;
+    // Per-year tables
+    state.schoolYears.forEach(mp=>{
+      const rows=mp.courses.filter(c=>c.name||c.grade);if(!rows.length)return;
+      const mpGPA=calcMPGPA(mp.courses);
+      // Section header
+      doc.setFillColor(...FAINT);doc.rect(14,y,W-28,6,'F');
+      doc.setFontSize(7);doc.setFont('helvetica','bold');doc.setTextColor(...STAR);
+      doc.text(mp.name,16,y+4.2);
+      const gpaStr=`UW ${fmt(mpGPA.uw)} · W ${fmt(mpGPA.w)} · ${mpGPA.credits} CR`;
+      doc.setTextColor(...BLUE);doc.text(gpaStr,W-14-doc.getTextWidth(gpaStr),y+4.2);
+      y+=8;
+      // Column headers
+      doc.setFontSize(6);doc.setFont('helvetica','normal');doc.setTextColor(...MUTED);
+      doc.text('Course',16,y);doc.text('Grade',120,y);doc.text('Phase',142,y);doc.text('Credits',165,y);doc.text('UW Pts',185,y);
+      y+=4;doc.setDrawColor(...FAINT);doc.setLineWidth(.2);doc.line(14,y,W-14,y);y+=3;
+      // Rows
+      rows.forEach(c=>{
+        const excl=isCourseExcluded(c.name);
+        const pts=gradeToPoints(c.grade);
+        if(y>H-24){doc.addPage();doc.setFillColor(...BG);doc.rect(0,0,W,H,'F');y=14;}
+        doc.setFontSize(7);
+        if(excl){doc.setTextColor(...MUTED);}else{doc.setTextColor(...STAR);}
+        const nm=c.name||'Unnamed';doc.text(nm.length>38?nm.slice(0,37)+'…':nm,16,y);
+        doc.setTextColor(...BLUE);doc.text(excl?'—':String(c.grade||'—'),120,y);
+        doc.setTextColor(...MUTED);doc.text(PHASE_LABELS[c.phase]||'—',142,y);
+        doc.text(String(c.credits||1),165,y);
+        doc.text(pts!=null&&!excl?pts.toFixed(1):'—',185,y);
+        y+=5;
+      });
+      y+=4;
+    });
+    // Footer
+    doc.setFillColor(8,15,30);doc.rect(0,H-10,W,10,'F');
+    doc.setFontSize(6);doc.setFont('helvetica','normal');doc.setTextColor(...MUTED);
+    doc.text('ATLAS GPA · Independent academic tool · Not affiliated with any school',W/2,H-4,{align:'center'});
+    const date=new Date().toISOString().split('T')[0];
+    doc.save(`ATLAS_GPA_Report_${date}.pdf`);
+    showToast('PDF downloaded ✦');
+  }catch(err){
+    console.error('[PDF]',err);
+    showToast('PDF failed — downloading .txt');
     document.getElementById('btnDownloadTxt').click();
   }
 });
@@ -1145,26 +1414,34 @@ function pickAC(idx){
   if(!r||acRowIdx===null)return;
   const mp=state.schoolYears[state.activeMP];
   if(!mp||!mp.courses[acRowIdx])return;
-  mp.courses[acRowIdx].name=r.canonicalName;
-  mp.courses[acRowIdx].phase=r.phase||'none';
-  mp.courses[acRowIdx].credits=String(r.credits);
+  const rowIdx=acRowIdx; // save before hideAC clears it
+  const course=mp.courses[rowIdx];
+  const excl=r.excludedFromGPA||isCourseExcluded(r.canonicalName);
+  course.name=r.canonicalName;
+  course.phase=excl?'none':(r.phase||'none');
+  course.credits=String(r.credits);
+  course.grade=excl?'':(course.grade==='P'||course.grade==='F'?'':course.grade);
   hideAC();
-  // Directly update the name input DOM so text shows without full re-render
-  const nameInput=document.querySelector(`#courseRows .course-row:nth-child(${acRowIdx+1}) input[data-field="name"]`);
-  if(nameInput)nameInput.value=r.canonicalName;
-  // Flash the row green
-  const row=nameInput?.closest('.course-row');
-  if(row){row.classList.add('ac-filled');setTimeout(()=>row.classList.remove('ac-filled'),600);}
-  // Focus the grade input
-  const gradeInput=document.querySelector(`#courseRows .course-row:nth-child(${acRowIdx+1}) input[data-field="grade"]`);
-  if(gradeInput&&!gradeInput.disabled)gradeInput.focus();
   saveLocal();
   renderRows();
   renderResults();
+  const rows=document.querySelectorAll('#courseRows .course-row');
+  const row=rows[rowIdx];
+  if(row){
+    // Belt-and-suspenders: set name directly in case re-render lost focus
+    const nameEl=row.querySelector('input[data-field="name"]');
+    if(nameEl) nameEl.value=r.canonicalName;
+    row.classList.add('ac-filled');
+    setTimeout(()=>row.classList.remove('ac-filled'),600);
+    if(!excl){
+      const gradeEl=row.querySelector('input[data-field="grade"]');
+      if(gradeEl)gradeEl.focus();
+    }
+  }
 }
 
 document.addEventListener('click',e=>{if(!acDrop.contains(e.target))hideAC();});
-document.addEventListener('scroll',()=>hideAC(),true);
+document.addEventListener('scroll',e=>{if(!acDrop.contains(e.target))hideAC();},true);
 
 document.getElementById('courseRows').addEventListener('input',e=>{
   const inp=e.target;
@@ -1199,8 +1476,47 @@ document.getElementById('courseRows').addEventListener('keydown',e=>{
 const pdfInput=document.getElementById('pdfFileInput');
 const pdfModal=document.getElementById('pdfModal');
 let pdfData=null;
+let ollamaAvailable=null; // cached after first check
 
-document.getElementById('btnImportPDF').addEventListener('click',()=>pdfInput.click());
+// Poll Ollama status and update the badge
+async function refreshOllamaStatus(){
+  try{
+    const res=await fetch('/api/ollama/status');
+    const s=await res.json();
+    ollamaAvailable=s.available&&s.hasModel;
+    const badge=document.getElementById('ollamaStatusBadge');
+    if(!badge)return;
+    if(s.available&&s.hasModel){
+      badge.textContent='AI ready';
+      badge.style.color='var(--green)';badge.style.borderColor='rgba(77,201,148,.4)';badge.style.background='rgba(77,201,148,.06)';
+    }else if(s.available&&!s.hasModel){
+      badge.textContent='Ollama — model not pulled';
+      badge.style.color='var(--amber)';badge.style.borderColor='rgba(201,147,58,.4)';badge.style.background='rgba(201,147,58,.06)';
+    }else{
+      badge.textContent='Basic parser';
+      badge.style.color='var(--muted)';badge.style.borderColor='rgba(74,180,255,.2)';badge.style.background='rgba(74,180,255,.04)';
+    }
+  }catch{
+    const badge=document.getElementById('ollamaStatusBadge');
+    if(badge){badge.textContent='Basic parser';badge.style.color='var(--muted)';}
+    ollamaAvailable=false;
+  }
+}
+// Check on load (non-blocking)
+refreshOllamaStatus();
+
+document.getElementById('btnImportPDF').addEventListener('click',()=>{
+  refreshOllamaStatus(); // refresh before opening
+  pdfInput.click();
+});
+
+function pdfLoadingHTML(usingAI){
+  const label=usingAI?'AI reading your report card…':'Parsing document…';
+  const sub=usingAI?'<div style="font-size:11px;color:var(--faint);margin-top:4px">llama3.2 extracting courses</div>':'';
+  return '<div style="text-align:center;padding:2.5rem;color:var(--muted);font-size:13px;display:flex;flex-direction:column;align-items:center;gap:10px">'+
+    '<svg width="28" height="28" viewBox="0 0 28 28" fill="none" style="animation:spin 1s linear infinite"><circle cx="14" cy="14" r="11" stroke="rgba(74,180,255,.2)" stroke-width="2"/><path d="M14 3a11 11 0 0111 11" stroke="#4AB4FF" stroke-width="2" stroke-linecap="round"/></svg>'+
+    `<span>${label}</span>${sub}</div>`;
+}
 
 pdfInput.addEventListener('change',async()=>{
   const file=pdfInput.files[0];
@@ -1208,10 +1524,7 @@ pdfInput.addEventListener('change',async()=>{
   if(!file)return;
   if(file.size>10*1024*1024){showToast('PDF too large (max 10 MB)');return;}
 
-  document.getElementById('pdfPreviewContent').innerHTML=
-    '<div style="text-align:center;padding:2.5rem;color:var(--muted);font-size:13px;display:flex;flex-direction:column;align-items:center;gap:12px">'+
-    '<svg width="28" height="28" viewBox="0 0 28 28" fill="none" style="animation:spin 1s linear infinite"><circle cx="14" cy="14" r="11" stroke="rgba(74,180,255,.2)" stroke-width="2"/><path d="M14 3a11 11 0 0111 11" stroke="#4AB4FF" stroke-width="2" stroke-linecap="round"/></svg>'+
-    '<span>Parsing Schoology PDF…</span></div>';
+  document.getElementById('pdfPreviewContent').innerHTML=pdfLoadingHTML(ollamaAvailable);
   document.getElementById('btnConfirmImport').disabled=true;
   document.getElementById('btnConfirmImport').classList.add('btn-loading');
   pdfModal.classList.add('open');
@@ -1222,66 +1535,123 @@ pdfInput.addEventListener('change',async()=>{
     if(!res.ok){
       const err=await res.json().catch(()=>({error:'Server error'}));
       document.getElementById('pdfPreviewContent').innerHTML=
-        `<div style="color:var(--red);padding:1.5rem;text-align:center;font-size:13px">⚠ ${esc(err.error||'Parse failed')}<br><span style="font-size:11px;color:var(--faint);margin-top:.4rem;display:block">${esc(err.detail||'')}</span></div>`;
+        `<div style="padding:1.5rem;text-align:center">
+          <div style="color:var(--red);font-size:13px;margin-bottom:.6rem">⚠ ${esc(err.error||'Parse failed')}</div>
+          ${err.detail?`<div style="font-size:11px;color:var(--faint);margin-bottom:.8rem">${esc(err.detail)}</div>`:''}
+          <div style="font-size:11.5px;color:var(--muted)">Close this dialog and add your courses manually.</div>
+        </div>`;
       document.getElementById('btnConfirmImport').disabled=true;
+      document.getElementById('btnConfirmImport').classList.remove('btn-loading');
       return;
     }
     pdfData=await res.json();
+    // Update badge to show which engine actually ran
+    const badge=document.getElementById('ollamaStatusBadge');
+    if(badge&&pdfData.parseMethod){
+      if(pdfData.parseMethod==='ollama'){
+        badge.textContent=`AI · ${pdfData.modelUsed||'llama3.2'}`;
+        badge.style.color='var(--green)';badge.style.borderColor='rgba(77,201,148,.4)';badge.style.background='rgba(77,201,148,.06)';
+      }else if(pdfData.parseMethod==='regex'){
+        badge.textContent='Basic parser (fallback)';
+        badge.style.color='var(--amber)';badge.style.borderColor='rgba(201,147,58,.4)';badge.style.background='rgba(201,147,58,.06)';
+      }
+    }
+    const hasRecords=(pdfData.records||[]).filter(r=>!r.isNA).length>0;
+    if(!hasRecords){
+      const ollamaMsg=pdfData.parseMethod==='none'&&pdfData.parseWarnings?.some(w=>w.includes('Ollama'))
+        ?'<div style="margin-top:.6rem;font-size:11px;color:var(--faint)">Start Ollama and pull llama3.2 for AI-powered extraction:<br><code style="color:var(--cyan)">ollama pull llama3.2</code></div>'
+        :'';
+      document.getElementById('pdfPreviewContent').innerHTML=
+        `<div style="padding:1.5rem;text-align:center">
+          <div style="color:var(--amber);font-size:13px;margin-bottom:.6rem">⚠ No course data found in this document.</div>
+          <div style="font-size:11.5px;color:var(--muted);line-height:1.6">Close this dialog and add your courses manually in the GPA Calculator tab.</div>
+          ${ollamaMsg}
+          ${(pdfData.parseWarnings||[]).length?`<div style="margin-top:.8rem;font-size:11px;color:var(--amber)">${pdfData.parseWarnings.map(w=>`⚠ ${esc(w)}`).join('<br>')}</div>`:''}
+        </div>`;
+      document.getElementById('btnConfirmImport').disabled=true;
+      document.getElementById('btnConfirmImport').classList.remove('btn-loading');
+      return;
+    }
     renderPDFPreview(pdfData);
     document.getElementById('btnConfirmImport').disabled=false;
     document.getElementById('btnConfirmImport').classList.remove('btn-loading');
-  }catch{
+  }catch(err){
+    console.error('[pdf import]',err);
     document.getElementById('pdfPreviewContent').innerHTML=
-      '<div style="color:var(--red);padding:1.5rem;text-align:center;font-size:13px">⚠ Network error — is the server running?</div>';
+      `<div style="padding:1.5rem;text-align:center">
+        <div style="color:var(--red);font-size:13px;margin-bottom:.6rem">⚠ Network error — could not process PDF.</div>
+        <div style="font-size:11.5px;color:var(--muted)">Make sure the server is running, then try again or add courses manually.</div>
+      </div>`;
+    document.getElementById('btnConfirmImport').disabled=true;
+    document.getElementById('btnConfirmImport').classList.remove('btn-loading');
   }
 });
 
 function renderPDFPreview(data){
-  const included=(data.records||[]).filter(r=>!r.excludedFromGPA&&!r.isNA);
-  const excluded=(data.records||[]).filter(r=>r.excludedFromGPA||r.isNA);
+  const gpaRecords=(data.records||[]).filter(r=>!r.excludedFromGPA&&!r.isNA);
+  const pfRecords=(data.records||[]).filter(r=>r.excludedFromGPA&&!r.isNA);
+  const naRecords=(data.records||[]).filter(r=>r.isNA);
   const pc=data.gpaPreview;
   const phaseStyle=p=>p==='6'?'color:var(--amber)':p==='5'?'color:var(--purple)':p==='4'?'color:var(--cyan)':'color:var(--muted)';
+  const engineNote=data.usedOllama
+    ?`<div style="font-size:10px;color:var(--green);margin-bottom:.5rem">✦ Extracted by AI (${esc(data.modelUsed||'llama3.2')})</div>`
+    :`<div style="font-size:10px;color:var(--muted);margin-bottom:.5rem">Extracted by pattern parser</div>`;
   document.getElementById('pdfPreviewContent').innerHTML=`
+    ${engineNote}
     <div class="pdf-preview-header">
       ${data.studentName?`<div class="pdf-stat">Student <span>${esc(data.studentName)}</span></div>`:''}
       ${data.schoolYear?`<div class="pdf-stat">Year <span style="color:var(--blue)">${esc(data.schoolYear)}</span></div>`:''}
-      <div class="pdf-stat">Courses <span style="color:var(--green)">${included.length} included</span>${excluded.length?` · <span style="color:var(--faint)">${excluded.length} excluded</span>`:''}</div>
+      <div class="pdf-stat">Courses <span style="color:var(--green)">${gpaRecords.length} graded</span>${pfRecords.length?` · <span style="color:var(--amber)">${pfRecords.length} excluded</span>`:''}</div>
     </div>
-    ${pc?`<div class="pdf-gpa-row">
+    ${pc&&(pc.unweightedGPA!=null||pc.weightedGPA!=null)?`<div class="pdf-gpa-row">
       <div><div class="pdf-gpa-val">${pc.unweightedGPA!=null?pc.unweightedGPA.toFixed(2):'—'}</div><div class="pdf-gpa-lbl">Unweighted GPA</div></div>
       <div><div class="pdf-gpa-val" style="color:var(--purple)">${pc.weightedGPA!=null?pc.weightedGPA.toFixed(2):'—'}</div><div class="pdf-gpa-lbl">Weighted GPA</div></div>
-      <div><div class="pdf-gpa-val" style="color:var(--cyan);font-size:1.1rem">${pc.totalCredits||0}</div><div class="pdf-gpa-lbl">Credits</div></div>
+      <div><div class="pdf-gpa-val" style="color:var(--cyan);font-size:1.1rem">${fmtCr(pc.totalCredits||0)}</div><div class="pdf-gpa-lbl">Credits</div></div>
     </div>`:''}
     <div class="pdf-course-list">
-      ${included.length?`<div class="pdf-section-lbl">Included in GPA (${included.length})</div>`+
-        included.map(r=>`
+      ${gpaRecords.length?`<div class="pdf-section-lbl">Counted in GPA (${gpaRecords.length})</div>`+
+        gpaRecords.map(r=>`
           <div class="pdf-course-row">
             <span style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.canonicalName)}">${esc(r.canonicalName)}</span>
-            <span style="text-align:center;font-family:'Cinzel',serif;font-weight:600;font-size:.8rem;color:var(--blue)">${esc(r.grade)}%</span>
-            <span style="text-align:center;color:var(--muted);font-size:11px">${r.credits}cr</span>
+            <span style="text-align:center;font-family:'Cinzel',serif;font-weight:600;font-size:.8rem;color:var(--blue)">${esc(r.grade)}${/^\d/.test(r.grade)?'%':''}</span>
+            <span style="text-align:center;color:var(--muted);font-size:11px">${fmtCr(r.credits)}cr</span>
             <span style="font-size:11px;${phaseStyle(r.phase)}">${PHASE_LABELS[r.phase||'none']||'—'}</span>
-          </div>`).join(''):'<div style="padding:1rem;text-align:center;color:var(--faint);font-size:12px">No courses found</div>'}
-      ${excluded.length?`<div class="pdf-section-lbl" style="margin-top:.2rem">Excluded from GPA (${excluded.length})</div>`+
-        excluded.map(r=>`
-          <div class="pdf-excluded-row">
-            <span>${esc(r.canonicalName)}</span>
-            <span>${esc(r.isNA?'N/A':r.exclusionReason||r.grade)}</span>
           </div>`).join(''):''}
+      ${pfRecords.length?`<div class="pdf-section-lbl" style="margin-top:.2rem">Credits only — not in GPA (${pfRecords.length})</div>`+
+        pfRecords.map(r=>`
+          <div class="pdf-course-row">
+            <span style="color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.canonicalName)}</span>
+            <span style="text-align:center"><span class="pf-badge">No GPA</span></span>
+            <span style="text-align:center;color:var(--muted);font-size:11px">${r.credits>0?fmtCr(r.credits)+'cr':'—'}</span>
+            <span style="font-size:11px;color:var(--muted)">Non-graded</span>
+          </div>`).join(''):''}
+      ${!gpaRecords.length&&!pfRecords.length?'<div style="padding:1rem;text-align:center;color:var(--faint);font-size:12px">No courses found in document</div>':''}
+      ${naRecords.length?`<div class="pdf-section-lbl" style="margin-top:.2rem;opacity:.5">Skipped — no grade (${naRecords.length})</div>`+
+        naRecords.map(r=>`<div class="pdf-excluded-row"><span>${esc(r.canonicalName)}</span><span>N/A</span></div>`).join(''):''}
     </div>
     ${data.parseWarnings&&data.parseWarnings.length?`<div style="font-size:11px;color:var(--amber);padding:.5rem .75rem;background:rgba(201,147,58,.06);border-radius:6px;margin-bottom:.75rem">${data.parseWarnings.map(w=>`⚠ ${esc(w)}`).join('<br>')}</div>`:''}`;
 }
 
 document.getElementById('btnConfirmImport').addEventListener('click',()=>{
   if(!pdfData)return;
-  const included=(pdfData.records||[]).filter(r=>!r.excludedFromGPA&&!r.isNA);
-  if(!included.length){showToast('No courses to import');return;}
+  const gpaRecords=(pdfData.records||[]).filter(r=>!r.excludedFromGPA&&!r.isNA);
+  const pfRecords=(pdfData.records||[]).filter(r=>r.excludedFromGPA&&!r.isNA);
+  if(!gpaRecords.length&&!pfRecords.length){showToast('No courses to import');return;}
 
   // Keep full 4-digit year: "2025-2026" stays "2025-2026"
   const mpName=pdfData.schoolYear||'Import';
 
-  const newCourses=included.map(r=>({
+  // GPA courses: import grade as-is (numeric percent)
+  const gpaCourses=gpaRecords.map(r=>({
     id:uid(),name:r.canonicalName,grade:r.grade,credits:String(r.credits||1),phase:r.phase||'none'
   }));
+  // Pass/fail courses: convert numeric grade to P/F
+  const pfCourses=pfRecords.map(r=>{
+    const num=parseFloat(r.grade);
+    const pf=(!isNaN(num)&&num>=66)?'P':'F';
+    return {id:uid(),name:r.canonicalName,grade:pf,credits:String(r.credits||0),phase:'none'};
+  });
+  const newCourses=[...gpaCourses,...pfCourses];
 
   // Merge into existing tab with same name if it exists
   const existingIdx=state.schoolYears.findIndex(sy=>sy.name===mpName);
@@ -1297,44 +1667,81 @@ document.getElementById('btnConfirmImport').addEventListener('click',()=>{
   }
   pdfModal.classList.remove('open');pdfData=null;
   saveLocal();renderAll();
-  showToast(`Imported ${newCourses.length} courses ✦`);
+  const pfCount=pfCourses.length;
+  const msg=pfCount
+    ?`Imported ${gpaCourses.length} graded + ${pfCount} pass/fail ✦`
+    :`Imported ${newCourses.length} courses ✦`;
+  showToast(msg);
 });
 
 document.getElementById('pdfModalClose').addEventListener('click',()=>{pdfModal.classList.remove('open');pdfData=null;});
 pdfModal.addEventListener('click',e=>{if(e.target===e.currentTarget){pdfModal.classList.remove('open');pdfData=null;}});
 
 // ── GOOGLE SIGN-IN ──────────────────────────────────────────────────────
+const SIGNIN_BTN_HTML=`<a class="user-pill" href="/auth/google" title="Sign in with Google">
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M13 7.15c0-.46-.04-.9-.12-1.32H7v2.5h3.36a2.87 2.87 0 01-1.25 1.89v1.57h2.02C12.39 10.65 13 9.04 13 7.15z" fill="#4285F4"/><path d="M7 13c1.68 0 3.09-.56 4.12-1.51l-2.02-1.57c-.56.37-1.27.6-2.1.6-1.62 0-2.99-1.09-3.48-2.56H1.44v1.61A6 6 0 007 13z" fill="#34A853"/><path d="M3.52 7.96A3.6 3.6 0 013.32 7c0-.33.06-.65.2-.96V4.43H1.44A6 6 0 001 7c0 .97.23 1.88.44 2.57l2.08-1.61z" fill="#FBBC05"/><path d="M7 3.48c.91 0 1.73.31 2.37.93l1.78-1.78A6 6 0 007 1a6 6 0 00-5.56 3.43l2.08 1.61C4.01 4.57 5.38 3.48 7 3.48z" fill="#EA4335"/></svg>
+  Sign in
+</a>`;
+let currentUser=null;
 (async()=>{
-  const area=document.getElementById('authArea');
-  const token=new URLSearchParams(location.search).get('token');
-  if(token){sessionStorage.setItem('atlas_token',token);history.replaceState({},'',location.pathname);}
-  const stored=sessionStorage.getItem('atlas_token');
-  if(stored){
-    try{
-      const res=await fetch('/api/me',{headers:{Authorization:'Bearer '+stored}});
-      if(res.ok){
-        const u=await res.json();
-        area.innerHTML=`<div class="user-pill" title="${esc(u.email)}">
-          ${u.avatarUrl?`<img class="user-avatar" src="${esc(u.avatarUrl)}" alt=""/>`:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.1"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>'}
-          <span>${esc(u.displayName||u.email.split('@')[0])}</span>
-        </div>`;
-        if(u.needsHighSchoolYear)showYearPopup(stored);
-        // Sync HS year from server profile if available
-        if(u.highSchoolYear&&!state.highSchoolYear){
-          state.highSchoolYear=u.highSchoolYear;
-          const sel=document.getElementById('hsYearSelect');if(sel)sel.value=u.highSchoolYear;
-          state.schoolYears=getSchoolYearTabs(u.highSchoolYear,state.schoolYears);
-          saveLocal();renderAll();
+  try{
+    const area=document.getElementById('authArea');
+    const params=new URLSearchParams(location.search);
+
+    // Handle auth errors from OAuth redirect
+    const authError=params.get('auth_error');
+    if(authError){
+      try{history.replaceState({},'',location.pathname);}catch{}
+      const msg=authError==='google_disabled'
+        ?'Google sign-in is not configured on this server.'
+        :'Sign-in failed. Please try again.';
+      area.innerHTML=SIGNIN_BTN_HTML;
+      setTimeout(()=>showToast(msg),400);
+      return;
+    }
+
+    const token=params.get('token');
+    if(token){
+      try{sessionStorage.setItem('atlas_token',token);}catch{}
+      try{history.replaceState({},'',location.pathname);}catch{}
+    }
+    const stored=sessionStorage.getItem('atlas_token');
+    if(stored){
+      try{
+        // Timeout after 6 seconds to avoid freeze
+        const ctrl=new AbortController();
+        const tmo=setTimeout(()=>ctrl.abort(),6000);
+        let res;
+        try{res=await fetch('/api/me',{headers:{Authorization:'Bearer '+stored},signal:ctrl.signal});}
+        finally{clearTimeout(tmo);}
+        if(res.ok){
+          const u=await res.json();
+          currentUser=u;
+          area.innerHTML=`<div class="user-pill" title="${esc(u.email)}">
+            ${u.avatarUrl?`<img class="user-avatar" src="${esc(u.avatarUrl)}" alt=""/>`:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.1"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>'}
+            <span>${esc(u.displayName||u.email.split('@')[0])}</span>
+          </div>`;
+          if(u.needsHighSchoolYear)showYearPopup(stored);
+          if(u.highSchoolYear&&!state.highSchoolYear){
+            state.highSchoolYear=u.highSchoolYear;
+            state.schoolYears=getSchoolYearTabs(u.highSchoolYear,state.schoolYears);
+            saveLocal();renderAll();
+          }
+          if(state.activeMainTab==='profile')renderProfileTab();
+          return;
         }
-        return;
+      }catch(e){
+        if(e.name==='AbortError'){showToast('Sign-in check timed out — you can still use the app.');}
+        else{console.error('[auth]',e);}
       }
-    }catch{}
-    sessionStorage.removeItem('atlas_token');
+      try{sessionStorage.removeItem('atlas_token');}catch{}
+    }
+    area.innerHTML=SIGNIN_BTN_HTML;
+  }catch(e){
+    console.error('[auth IIFE]',e);
+    const area=document.getElementById('authArea');
+    if(area)area.innerHTML=SIGNIN_BTN_HTML;
   }
-  area.innerHTML=`<a class="user-pill" href="/auth/google" title="Sign in with Google">
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M13 7.15c0-.46-.04-.9-.12-1.32H7v2.5h3.36a2.87 2.87 0 01-1.25 1.89v1.57h2.02C12.39 10.65 13 9.04 13 7.15z" fill="#4285F4"/><path d="M7 13c1.68 0 3.09-.56 4.12-1.51l-2.02-1.57c-.56.37-1.27.6-2.1.6-1.62 0-2.99-1.09-3.48-2.56H1.44v1.61A6 6 0 007 13z" fill="#34A853"/><path d="M3.52 7.96A3.6 3.6 0 013.32 7c0-.33.06-.65.2-.96V4.43H1.44A6 6 0 001 7c0 .97.23 1.88.44 2.57l2.08-1.61z" fill="#FBBC05"/><path d="M7 3.48c.91 0 1.73.31 2.37.93l1.78-1.78A6 6 0 007 1a6 6 0 00-5.56 3.43l2.08 1.61C4.01 4.57 5.38 3.48 7 3.48z" fill="#EA4335"/></svg>
-    Sign in
-  </a>`;
 })();
 
 function showYearPopup(token){
@@ -1352,7 +1759,6 @@ function showYearPopup(token){
     btn.addEventListener('click',async()=>{
       const yr=btn.dataset.year;
       state.highSchoolYear=yr;
-      const sel=document.getElementById('hsYearSelect');if(sel)sel.value=yr;
       state.schoolYears=getSchoolYearTabs(yr,state.schoolYears);
       saveLocal();renderAll();
       await fetch('/api/me/high-school-year',{method:'PUT',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({highSchoolYear:yr})}).catch(()=>{});

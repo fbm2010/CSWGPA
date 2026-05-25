@@ -1,7 +1,8 @@
 /**
  * ATLAS GPA — Report Card Import Routes
  *
- * POST /api/reportcards/parse          → parse PDF, no auth, no DB save (frontend use)
+ * GET  /api/ollama/status              → check if Ollama is running + model pulled
+ * POST /api/reportcards/parse          → parse PDF (Ollama → regex fallback), no auth
  * POST /api/reportcards/upload         → parse PDF + save to DB (requires auth)
  * POST /api/reportcards/import/confirm → confirm pending import
  * POST /api/reportcards/import/manual  → submit manual grades
@@ -14,10 +15,12 @@ const fs       = require('fs');
 const path     = require('path');
 const crypto   = require('crypto');
 const router   = express.Router();
-const { parseSchoologyPDF } = require('../utils/pdfParser');
-const { calculateGPA }     = require('../utils/gpaCalculator');
-const { authenticateJWT }  = require('../middleware/auth');
-const { getDb }            = require('../db');
+
+const { parseWithOllama, checkOllamaAvailable } = require('../utils/ollamaParser');
+const { parseSchoologyPDF }                      = require('../utils/pdfParser');
+const { calculateGPA }                           = require('../utils/gpaCalculator');
+const { authenticateJWT }                        = require('../middleware/auth');
+const { getDb }                                  = require('../db');
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads';
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -37,15 +40,69 @@ const upload = multer({
       : cb(new Error('Only PDF files accepted')),
 });
 
-// POST /api/reportcards/parse  — no auth, just parse and return (no DB save)
+// ── Shared parse logic: Ollama first, regex fallback ─────────────────────────
+async function parsePDF(pdfBuffer) {
+  // Try Ollama
+  const ollamaResult = await parseWithOllama(pdfBuffer);
+  if (ollamaResult.usedOllama && ollamaResult.records.length > 0) {
+    return { ...ollamaResult, parseMethod: 'ollama' };
+  }
+
+  // If Ollama is unavailable, try regex parser (silent fallback)
+  if (ollamaResult.ollamaUnavailable || !ollamaResult.usedOllama) {
+    const regexResult = await parseSchoologyPDF(pdfBuffer);
+    return {
+      ...regexResult,
+      parseMethod: 'regex',
+      usedOllama:  false,
+    };
+  }
+
+  // Ollama ran but found nothing — still try regex
+  const regexResult = await parseSchoologyPDF(pdfBuffer);
+  if (regexResult.records.length > 0) {
+    return {
+      ...regexResult,
+      parseMethod:    'regex',
+      usedOllama:     false,
+      parseWarnings:  [
+        ...(ollamaResult.parseWarnings || []),
+        ...(regexResult.parseWarnings  || []),
+      ],
+    };
+  }
+
+  // Both failed — return Ollama result with combined warnings
+  return {
+    ...ollamaResult,
+    parseMethod:   'none',
+    parseWarnings: [
+      ...(ollamaResult.parseWarnings || []),
+      ...(regexResult.parseWarnings  || []),
+    ],
+  };
+}
+
+// ── GET /api/ollama/status ────────────────────────────────────────────────────
+router.get('/api/ollama/status', async (req, res) => {
+  try {
+    const status = await checkOllamaAvailable();
+    res.json(status);
+  } catch (err) {
+    res.json({ available: false, hasModel: false, models: [], error: err.message });
+  }
+});
+
+// ── POST /api/reportcards/parse  (no auth, no DB) ────────────────────────────
 router.post('/api/reportcards/parse', upload.single('pdf'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No PDF uploaded' });
     const pdfBuffer = fs.readFileSync(req.file.path);
-    // Clean up temp file immediately — nothing is saved to DB
     try { fs.unlinkSync(req.file.path); } catch {}
 
-    const { records, schoolYear, studentName, parseWarnings } = await parseSchoologyPDF(pdfBuffer);
+    const { records, schoolYear, studentName, parseWarnings, parseMethod, usedOllama, modelUsed } =
+      await parsePDF(pdfBuffer);
+
     const gpaCourses = records
       .filter(r => !r.isNA && !r.excludedFromGPA)
       .map(r => ({ name: r.canonicalName, grade: r.grade, credits: r.credits, phase: r.phase }));
@@ -56,13 +113,16 @@ router.post('/api/reportcards/parse', upload.single('pdf'), async (req, res) => 
       schoolYear,
       studentName,
       parseWarnings,
+      parseMethod,
+      usedOllama,
+      modelUsed: modelUsed || null,
       records,
       gpaPreview: {
-        unweightedGPA:  gpaPreview.unweightedGPA,
-        weightedGPA:    gpaPreview.weightedGPA,
-        totalCredits:   gpaPreview.totalCredits,
-        courseCount:    gpaPreview.courseCount,
-        excludedCount:  records.filter(r => r.excludedFromGPA || r.isNA).length,
+        unweightedGPA: gpaPreview.unweightedGPA,
+        weightedGPA:   gpaPreview.weightedGPA,
+        totalCredits:  gpaPreview.totalCredits,
+        courseCount:   gpaPreview.courseCount,
+        excludedCount: records.filter(r => r.excludedFromGPA || r.isNA).length,
       },
     });
   } catch (err) {
@@ -71,22 +131,23 @@ router.post('/api/reportcards/parse', upload.single('pdf'), async (req, res) => 
   }
 });
 
-// POST /api/reportcards/upload
+// ── POST /api/reportcards/upload (auth required) ─────────────────────────────
 router.post('/api/reportcards/upload', authenticateJWT, upload.single('pdf'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No PDF uploaded' });
 
     const pdfBuffer = fs.readFileSync(req.file.path);
-    const { records, schoolYear, studentName, parseWarnings } = await parseSchoologyPDF(pdfBuffer);
+    const { records, schoolYear, studentName, parseWarnings, parseMethod, usedOllama } =
+      await parsePDF(pdfBuffer);
 
     const gpaCourses = records
       .filter(r => !r.isNA && !r.excludedFromGPA)
       .map(r => ({ name: r.canonicalName, grade: r.grade, credits: r.credits, phase: r.phase, schoolYear: r.schoolYear }));
 
     const gpaPreview = calculateGPA(gpaCourses);
+    const db         = getDb();
+    const importId   = crypto.randomUUID();
 
-    const db       = getDb();
-    const importId = crypto.randomUUID();
     db.prepare(`
       INSERT INTO reportcard_imports
         (id, user_id, method, original_filename, original_filepath, parsed_records, school_year, status)
@@ -101,6 +162,8 @@ router.post('/api/reportcards/upload', authenticateJWT, upload.single('pdf'), as
       schoolYear,
       studentName,
       parseWarnings,
+      parseMethod,
+      usedOllama,
       records,
       gpaPreview: {
         unweightedGPA: gpaPreview.unweightedGPA,
@@ -116,7 +179,7 @@ router.post('/api/reportcards/upload', authenticateJWT, upload.single('pdf'), as
   }
 });
 
-// POST /api/reportcards/import/confirm
+// ── POST /api/reportcards/import/confirm ─────────────────────────────────────
 router.post('/api/reportcards/import/confirm', authenticateJWT, (req, res) => {
   const { previewId, overrides } = req.body;
   if (!previewId) return res.status(400).json({ error: 'previewId required' });
@@ -136,7 +199,7 @@ router.post('/api/reportcards/import/confirm', authenticateJWT, (req, res) => {
   res.json({ success: true, importId: previewId, recordCount: records.length });
 });
 
-// POST /api/reportcards/import/manual
+// ── POST /api/reportcards/import/manual ──────────────────────────────────────
 router.post('/api/reportcards/import/manual', authenticateJWT, (req, res) => {
   const { courses, schoolYear } = req.body;
   if (!courses?.length) return res.status(400).json({ error: 'courses array required' });
@@ -150,7 +213,7 @@ router.post('/api/reportcards/import/manual', authenticateJWT, (req, res) => {
   res.json({ success: true, importId, importSource: 'manual', gpa });
 });
 
-// GET /api/reportcards
+// ── GET /api/reportcards ──────────────────────────────────────────────────────
 router.get('/api/reportcards', authenticateJWT, (req, res) => {
   const imports = getDb().prepare(`
     SELECT id, method, original_filename, school_year, status, created_at
