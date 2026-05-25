@@ -205,6 +205,36 @@ select.inp-base option{background:#0c1628;color:var(--text)}
 .toast.show{transform:translateY(0);opacity:1}
 .toast-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
 footer{border-top:.5px solid var(--border);padding:1.5rem 0;text-align:center;font-size:11px;color:var(--faint)}
+
+/* ── AUTOCOMPLETE ── */
+#acDropdown{position:fixed;z-index:9999;display:none;background:#0c1628;border:.5px solid rgba(74,180,255,.38);border-radius:10px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.55);min-width:260px}
+.ac-item{padding:.55rem .9rem;cursor:pointer;border-bottom:.5px solid rgba(74,180,255,.07);transition:background .1s}
+.ac-item:hover,.ac-item.focused{background:rgba(74,180,255,.09)}
+.ac-item:last-child{border-bottom:none}
+.ac-name{font-size:13px;color:#D8EAFF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-meta{font-size:10px;color:#4A6A8A;margin-top:2px}
+
+/* ── PDF IMPORT MODAL ── */
+#pdfModal .modal{max-width:580px}
+.pdf-preview-header{display:flex;gap:16px;flex-wrap:wrap;padding:.75rem 0;margin-bottom:.75rem;border-bottom:.5px solid var(--border)}
+.pdf-stat{font-size:12px;color:var(--faint)}
+.pdf-stat span{color:var(--text)}
+.pdf-gpa-row{display:flex;gap:24px;margin-bottom:.9rem}
+.pdf-gpa-val{font-family:'Cinzel',serif;font-size:1.4rem;font-weight:700;color:var(--star);line-height:1}
+.pdf-gpa-lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-top:3px}
+.pdf-course-list{max-height:260px;overflow-y:auto;border:.5px solid var(--border);border-radius:var(--r-sm);margin-bottom:1rem}
+.pdf-course-row{display:grid;grid-template-columns:2fr 56px 48px 1fr;gap:6px;align-items:center;padding:.45rem .75rem;border-bottom:.5px solid rgba(74,180,255,.05);font-size:12.5px}
+.pdf-course-row:last-child{border-bottom:none}
+.pdf-section-lbl{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);padding:.4rem .75rem;background:rgba(74,180,255,.03)}
+.pdf-excluded-row{display:flex;justify-content:space-between;padding:.35rem .75rem;font-size:11.5px;opacity:.45;border-bottom:.5px solid rgba(74,180,255,.04)}
+.pdf-excluded-row:last-child{border-bottom:none}
+.btn-loading{opacity:.6;pointer-events:none;cursor:not-allowed}
+
+/* ── SIGN-IN BUTTON & AVATAR ── */
+.user-pill{display:flex;align-items:center;gap:7px;height:32px;padding:0 10px;border-radius:var(--pill);border:.5px solid var(--border-hi);background:transparent;font-family:'Outfit',sans-serif;font-size:11.5px;color:var(--muted);cursor:pointer;transition:all .18s;text-decoration:none}
+.user-pill:hover{border-color:var(--blue);color:var(--blue)}
+.user-avatar{width:22px;height:22px;border-radius:50%;object-fit:cover;border:.5px solid var(--border-hi)}
+
 @media(max-width:600px){
 .courses-header{display:none}
 .course-row{grid-template-columns:1fr 1fr!important;gap:6px}
@@ -238,6 +268,10 @@ footer{border-top:.5px solid var(--border);padding:1.5rem 0;text-align:center;fo
       </div>
     </a>
     <div class="h-actions">
+      <button class="btn-ghost" id="btnImportPDF" title="Import Schoology PDF report card">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 1.5h5.5L10 4v6.5a.5.5 0 01-.5.5h-7a.5.5 0 01-.5-.5v-9a.5.5 0 01.5-.5z" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 1.5V4H10M6 5.5v3M4.5 7l1.5 1.5L7.5 7" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Import PDF
+      </button>
       <button class="btn-ghost" id="btnExport">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M3 5l3-4 3 4M1 9v1.5a.5.5 0 00.5.5h9a.5.5 0 00.5-.5V9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
         Export
@@ -246,6 +280,7 @@ footer{border-top:.5px solid var(--border);padding:1.5rem 0;text-align:center;fo
         <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 5.5a4.5 4.5 0 104.5-4.5H3M3 1L1 3l2 2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Reset
       </button>
+      <div id="authArea"></div>
       <button class="btn-primary" id="btnSave">
         <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 8.5V9.5a.5.5 0 00.5.5h8a.5.5 0 00.5-.5V8.5M5.5 1v7M3 5.5L5.5 8l2.5-2.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Save
@@ -268,6 +303,21 @@ footer{border-top:.5px solid var(--border);padding:1.5rem 0;text-align:center;fo
     <div style="display:flex;gap:8px">
       <button class="btn-primary" id="btnCopyExport" style="flex:1;height:38px;border-radius:8px;justify-content:center">Copy to Clipboard</button>
       <button class="modal-close" id="exportClose" style="flex:1">Close</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="pdfFileInput" accept="application/pdf" style="display:none"/>
+
+<div class="modal-overlay" id="pdfModal">
+  <div class="modal">
+    <div class="modal-title">Schoology PDF Import</div>
+    <div id="pdfPreviewContent">
+      <div style="text-align:center;padding:2rem;color:var(--muted);font-size:13px">Parsing PDF…</div>
+    </div>
+    <div style="display:flex;gap:8px" id="pdfModalActions">
+      <button class="btn-primary" id="btnConfirmImport" style="flex:1;height:38px;border-radius:8px;justify-content:center">Import Courses</button>
+      <button class="modal-close" id="pdfModalClose" style="flex:1">Cancel</button>
     </div>
   </div>
 </div>
@@ -797,6 +847,256 @@ if(state.scoir){
 }
 document.getElementById('schoolDisplay').textContent=state.school;
 renderAll();
+
+// ═══════════════════════════════════════════════════════════════════════
+// BACKEND INTEGRATION — autocomplete, PDF import, GPA sync, auth
+// ═══════════════════════════════════════════════════════════════════════
+
+// ── AUTOCOMPLETE ────────────────────────────────────────────────────────
+const acDrop=document.createElement('div');
+acDrop.id='acDropdown';
+document.body.appendChild(acDrop);
+
+let acTimer=null,acRowIdx=null,acLastInput=null,acList=[];
+
+function hideAC(){acDrop.style.display='none';acRowIdx=null;acLastInput=null;}
+
+function showAC(inp,results){
+  if(!results.length){hideAC();return;}
+  acList=results;
+  acDrop.innerHTML=results.map((r,i)=>`
+    <div class="ac-item" data-i="${i}">
+      <div class="ac-name">${esc(r.displayName)}</div>
+      <div class="ac-meta">${esc(r.category||'')} · ${r.phase?'Phase '+r.phase:'Non-phased'} · ${r.credits} cr</div>
+    </div>`).join('');
+  acDrop.querySelectorAll('.ac-item').forEach(el=>{
+    el.onmousedown=e=>{e.preventDefault();pickAC(+el.dataset.i);};
+  });
+  const rect=inp.getBoundingClientRect();
+  Object.assign(acDrop.style,{
+    display:'block',
+    left:Math.min(rect.left,window.innerWidth-300)+'px',
+    top:(rect.bottom+window.scrollY+4)+'px',
+    width:Math.max(rect.width,280)+'px'
+  });
+  // fix: dropdown is fixed, not absolute
+  Object.assign(acDrop.style,{
+    top:(rect.bottom+4)+'px'
+  });
+}
+
+function pickAC(idx){
+  const r=acList[idx];
+  if(!r||acRowIdx===null)return;
+  const mp=state.markingPeriods[state.activeMP];
+  if(!mp||!mp.courses[acRowIdx])return;
+  mp.courses[acRowIdx].name=r.canonicalName;
+  mp.courses[acRowIdx].phase=r.phase||'none';
+  mp.courses[acRowIdx].credits=String(r.credits);
+  hideAC();
+  saveLocal();
+  renderRows();
+  renderResults();
+}
+
+document.addEventListener('click',e=>{if(!acDrop.contains(e.target))hideAC();});
+document.addEventListener('scroll',()=>hideAC(),true);
+
+document.getElementById('courseRows').addEventListener('input',e=>{
+  const inp=e.target;
+  if(inp.dataset.field!=='name')return;
+  acRowIdx=+inp.dataset.i;
+  acLastInput=inp;
+  clearTimeout(acTimer);
+  const q=inp.value.trim();
+  if(q.length<2){hideAC();return;}
+  acTimer=setTimeout(async()=>{
+    try{
+      const res=await fetch('/api/courses/autocomplete?q='+encodeURIComponent(q)+'&limit=7');
+      if(!res.ok)return;
+      const data=await res.json();
+      if(acLastInput===inp)showAC(inp,data.results||[]);
+    }catch{}
+  },260);
+});
+
+document.getElementById('courseRows').addEventListener('keydown',e=>{
+  if(acDrop.style.display==='none')return;
+  const items=acDrop.querySelectorAll('.ac-item');
+  if(!items.length)return;
+  const cur=acDrop.querySelector('.ac-item.focused');
+  if(e.key==='ArrowDown'){e.preventDefault();const next=cur?cur.nextElementSibling:items[0];if(next){cur&&cur.classList.remove('focused');next.classList.add('focused');}}
+  else if(e.key==='ArrowUp'){e.preventDefault();const prev=cur&&cur.previousElementSibling;if(prev){cur.classList.remove('focused');prev.classList.add('focused');}}
+  else if(e.key==='Enter'&&cur){e.preventDefault();pickAC(+cur.dataset.i);}
+  else if(e.key==='Escape'){hideAC();}
+});
+
+// ── PDF IMPORT ──────────────────────────────────────────────────────────
+const pdfInput=document.getElementById('pdfFileInput');
+const pdfModal=document.getElementById('pdfModal');
+let pdfData=null;
+
+document.getElementById('btnImportPDF').addEventListener('click',()=>pdfInput.click());
+
+pdfInput.addEventListener('change',async()=>{
+  const file=pdfInput.files[0];
+  pdfInput.value='';
+  if(!file)return;
+  if(file.size>10*1024*1024){showToast('PDF too large (max 10 MB)');return;}
+
+  // Show modal in loading state
+  document.getElementById('pdfPreviewContent').innerHTML=
+    '<div style="text-align:center;padding:2.5rem;color:var(--muted);font-size:13px;display:flex;flex-direction:column;align-items:center;gap:12px">'+
+    '<svg width="28" height="28" viewBox="0 0 28 28" fill="none" style="animation:spin 1s linear infinite"><circle cx="14" cy="14" r="11" stroke="rgba(74,180,255,.2)" stroke-width="2"/><path d="M14 3a11 11 0 0111 11" stroke="#4AB4FF" stroke-width="2" stroke-linecap="round"/></svg>'+
+    '<span>Parsing Schoology PDF…</span></div>';
+  document.getElementById('btnConfirmImport').disabled=true;
+  document.getElementById('btnConfirmImport').classList.add('btn-loading');
+  pdfModal.classList.add('open');
+
+  try{
+    const fd=new FormData();
+    fd.append('pdf',file);
+    const res=await fetch('/api/reportcards/parse',{method:'POST',body:fd});
+    if(!res.ok){
+      const err=await res.json().catch(()=>({error:'Server error'}));
+      document.getElementById('pdfPreviewContent').innerHTML=
+        `<div style="color:var(--red);padding:1.5rem;text-align:center;font-size:13px">⚠ ${esc(err.error||'Parse failed')}<br><span style="font-size:11px;color:var(--faint);margin-top:.4rem;display:block">${esc(err.detail||'')}</span></div>`;
+      document.getElementById('btnConfirmImport').disabled=true;
+      return;
+    }
+    pdfData=await res.json();
+    renderPDFPreview(pdfData);
+    document.getElementById('btnConfirmImport').disabled=false;
+    document.getElementById('btnConfirmImport').classList.remove('btn-loading');
+  }catch(err){
+    document.getElementById('pdfPreviewContent').innerHTML=
+      '<div style="color:var(--red);padding:1.5rem;text-align:center;font-size:13px">⚠ Network error — is the server running?</div>';
+  }
+});
+
+function renderPDFPreview(data){
+  const included=(data.records||[]).filter(r=>!r.excludedFromGPA&&!r.isNA);
+  const excluded=(data.records||[]).filter(r=>r.excludedFromGPA||r.isNA);
+  const pc=data.gpaPreview;
+  const phaseStyle=p=>p==='6'?'color:var(--amber)':p==='5'?'color:var(--purple)':p==='4'?'color:var(--cyan)':'color:var(--muted)';
+
+  document.getElementById('pdfPreviewContent').innerHTML=`
+    <div class="pdf-preview-header">
+      ${data.studentName?`<div class="pdf-stat">Student <span>${esc(data.studentName)}</span></div>`:''}
+      ${data.schoolYear?`<div class="pdf-stat">Year <span style="color:var(--blue)">${esc(data.schoolYear)}</span></div>`:''}
+      <div class="pdf-stat">Courses <span style="color:var(--green)">${included.length} included</span>${excluded.length?` · <span style="color:var(--faint)">${excluded.length} excluded</span>`:''}</div>
+    </div>
+    ${pc?`<div class="pdf-gpa-row">
+      <div><div class="pdf-gpa-val">${pc.unweightedGPA!=null?pc.unweightedGPA.toFixed(2):'—'}</div><div class="pdf-gpa-lbl">Unweighted GPA</div></div>
+      <div><div class="pdf-gpa-val" style="color:var(--purple)">${pc.weightedGPA!=null?pc.weightedGPA.toFixed(2):'—'}</div><div class="pdf-gpa-lbl">Weighted GPA</div></div>
+      <div><div class="pdf-gpa-val" style="color:var(--cyan);font-size:1.1rem">${pc.totalCredits||0}</div><div class="pdf-gpa-lbl">Credits</div></div>
+    </div>`:''}
+    <div class="pdf-course-list">
+      ${included.length?`<div class="pdf-section-lbl">Included in GPA (${included.length})</div>`+
+        included.map(r=>`
+          <div class="pdf-course-row">
+            <span style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.canonicalName)}">${esc(r.canonicalName)}</span>
+            <span style="text-align:center;font-family:'Cinzel',serif;font-weight:600;font-size:.8rem;color:var(--blue)">${esc(r.grade)}%</span>
+            <span style="text-align:center;color:var(--muted);font-size:11px">${r.credits}cr</span>
+            <span style="font-size:11px;${phaseStyle(r.phase)}">${PHASE_LABELS[r.phase||'none']||'—'}</span>
+          </div>`).join(''):'<div style="padding:1rem;text-align:center;color:var(--faint);font-size:12px">No courses found</div>'}
+      ${excluded.length?`<div class="pdf-section-lbl" style="margin-top:.2rem">Excluded from GPA (${excluded.length})</div>`+
+        excluded.map(r=>`
+          <div class="pdf-excluded-row">
+            <span>${esc(r.canonicalName)}</span>
+            <span>${esc(r.isNA?'N/A':r.exclusionReason||r.grade)}</span>
+          </div>`).join(''):''}
+    </div>
+    ${data.parseWarnings&&data.parseWarnings.length?`<div style="font-size:11px;color:var(--amber);padding:.5rem .75rem;background:rgba(201,147,58,.06);border-radius:6px;margin-bottom:.75rem">${data.parseWarnings.map(w=>`⚠ ${esc(w)}`).join('<br>')}</div>`:''}`;
+}
+
+document.getElementById('btnConfirmImport').addEventListener('click',()=>{
+  if(!pdfData)return;
+  const included=(pdfData.records||[]).filter(r=>!r.excludedFromGPA&&!r.isNA);
+  if(!included.length){showToast('No courses to import');return;}
+
+  // Shorten school year: "2025-2026" → "2025-26"
+  const rawYear=pdfData.schoolYear||'';
+  const mpName=rawYear?rawYear.replace(/-(\d{2})(\d{2})$/,'-$2'):'Import';
+
+  const newCourses=included.map(r=>({
+    id:uid(),
+    name:r.canonicalName,
+    grade:r.grade,
+    credits:String(r.credits||1),
+    phase:r.phase||'none'
+  }));
+
+  state.markingPeriods.push({id:uid(),name:mpName,courses:newCourses});
+  state.activeMP=state.markingPeriods.length-1;
+  pdfModal.classList.remove('open');
+  pdfData=null;
+  saveLocal();
+  renderAll();
+  showToast(`Imported ${newCourses.length} courses ✦`);
+});
+
+document.getElementById('pdfModalClose').addEventListener('click',()=>{
+  pdfModal.classList.remove('open');
+  pdfData=null;
+});
+pdfModal.addEventListener('click',e=>{if(e.target===e.currentTarget){pdfModal.classList.remove('open');pdfData=null;}});
+
+// ── GOOGLE SIGN-IN ──────────────────────────────────────────────────────
+(async()=>{
+  const area=document.getElementById('authArea');
+  const token=new URLSearchParams(location.search).get('token');
+  if(token){
+    sessionStorage.setItem('atlas_token',token);
+    // Clean token from URL without reload
+    history.replaceState({},'',location.pathname);
+  }
+  const stored=sessionStorage.getItem('atlas_token');
+  if(stored){
+    try{
+      const res=await fetch('/api/me',{headers:{Authorization:'Bearer '+stored}});
+      if(res.ok){
+        const u=await res.json();
+        area.innerHTML=`<div class="user-pill" title="${esc(u.email)}">
+          ${u.avatarUrl?`<img class="user-avatar" src="${esc(u.avatarUrl)}" alt=""/>`:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.1"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>'}
+          <span>${esc(u.displayName||u.email.split('@')[0])}</span>
+        </div>`;
+        // Show HS year popup if needed
+        if(u.needsHighSchoolYear)showYearPopup(stored);
+        return;
+      }
+    }catch{}
+    sessionStorage.removeItem('atlas_token');
+  }
+  area.innerHTML=`<a class="user-pill" href="/auth/google" title="Sign in with Google">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M13 7.15c0-.46-.04-.9-.12-1.32H7v2.5h3.36a2.87 2.87 0 01-1.25 1.89v1.57h2.02C12.39 10.65 13 9.04 13 7.15z" fill="#4285F4"/><path d="M7 13c1.68 0 3.09-.56 4.12-1.51l-2.02-1.57c-.56.37-1.27.6-2.1.6-1.62 0-2.99-1.09-3.48-2.56H1.44v1.61A6 6 0 007 13z" fill="#34A853"/><path d="M3.52 7.96A3.6 3.6 0 013.32 7c0-.33.06-.65.2-.96V4.43H1.44A6 6 0 001 7c0 .97.23 1.88.44 2.57l2.08-1.61z" fill="#FBBC05"/><path d="M7 3.48c.91 0 1.73.31 2.37.93l1.78-1.78A6 6 0 007 1a6 6 0 00-5.56 3.43l2.08 1.61C4.01 4.57 5.38 3.48 7 3.48z" fill="#EA4335"/></svg>
+    Sign in
+  </a>`;
+})();
+
+function showYearPopup(token){
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(3,6,9,.88);backdrop-filter:blur(8px);z-index:300;display:flex;align-items:center;justify-content:center;padding:1rem';
+  overlay.innerHTML=`<div style="background:var(--card-hi);border:.5px solid var(--border-hi);border-radius:14px;padding:2rem;width:100%;max-width:400px">
+    <div style="font-family:'Cinzel',serif;font-size:1rem;font-weight:600;color:var(--star);letter-spacing:.1em;margin-bottom:1.2rem">What year are you in?</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:1.2rem" id="yearOpts">
+      ${['Freshman (9th)','Sophomore (10th)','Junior (11th)','Senior (12th)'].map(y=>`
+        <button style="padding:.75rem 1rem;border-radius:8px;border:.5px solid var(--border);background:transparent;font-family:'Outfit',sans-serif;font-size:13px;color:var(--text);cursor:pointer;text-align:left;transition:all .18s" onmouseover="this.style.borderColor='var(--blue)';this.style.background='rgba(74,180,255,.06)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='transparent'" data-year="${y.split(' ')[0]}">${y}</button>`).join('')}
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelectorAll('[data-year]').forEach(btn=>{
+    btn.addEventListener('click',async()=>{
+      await fetch('/api/me/high-school-year',{method:'PUT',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({highSchoolYear:btn.dataset.year})}).catch(()=>{});
+      overlay.remove();
+    });
+  });
+}
+
+// CSS for spin animation (used in PDF loading)
+const _style=document.createElement('style');
+_style.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
+document.head.appendChild(_style);
 </script>
 </body>
 </html>

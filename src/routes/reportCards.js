@@ -1,7 +1,8 @@
 /**
  * ATLAS GPA — Report Card Import Routes
  *
- * POST /api/reportcards/upload         → parse Schoology PDF, return preview
+ * POST /api/reportcards/parse          → parse PDF, no auth, no DB save (frontend use)
+ * POST /api/reportcards/upload         → parse PDF + save to DB (requires auth)
  * POST /api/reportcards/import/confirm → confirm pending import
  * POST /api/reportcards/import/manual  → submit manual grades
  * GET  /api/reportcards                → list user's imports
@@ -34,6 +35,40 @@ const upload = multer({
     file.mimetype === 'application/pdf'
       ? cb(null, true)
       : cb(new Error('Only PDF files accepted')),
+});
+
+// POST /api/reportcards/parse  — no auth, just parse and return (no DB save)
+router.post('/api/reportcards/parse', upload.single('pdf'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No PDF uploaded' });
+    const pdfBuffer = fs.readFileSync(req.file.path);
+    // Clean up temp file immediately — nothing is saved to DB
+    try { fs.unlinkSync(req.file.path); } catch {}
+
+    const { records, schoolYear, studentName, parseWarnings } = await parseSchoologyPDF(pdfBuffer);
+    const gpaCourses = records
+      .filter(r => !r.isNA && !r.excludedFromGPA)
+      .map(r => ({ name: r.canonicalName, grade: r.grade, credits: r.credits, phase: r.phase }));
+    const gpaPreview = calculateGPA(gpaCourses);
+
+    res.json({
+      success: true,
+      schoolYear,
+      studentName,
+      parseWarnings,
+      records,
+      gpaPreview: {
+        unweightedGPA:  gpaPreview.unweightedGPA,
+        weightedGPA:    gpaPreview.weightedGPA,
+        totalCredits:   gpaPreview.totalCredits,
+        courseCount:    gpaPreview.courseCount,
+        excludedCount:  records.filter(r => r.excludedFromGPA || r.isNA).length,
+      },
+    });
+  } catch (err) {
+    console.error('[reportcards/parse]', err.message);
+    res.status(500).json({ error: 'PDF processing failed', detail: err.message });
+  }
 });
 
 // POST /api/reportcards/upload
