@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ATLAS GPA</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Outfit:wght@300;400;500;600&family=Crimson+Pro:ital,wght@0,300;1,300&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--space:#030609;--space-2:#060d18;--card:#080f1e;--card-hi:#0c1628;
+--blue:#4AB4FF;--blue-2:#267FCC;--blue-3:#0d3060;
+--cyan:#52D8F0;--purple:#9B7FF4;--amber:#C9933A;--green:#4DC994;--red:#E05A5A;
+--steel:#7BBAFF;--star:#D8EAFF;--text:#B8D4F0;--muted:#5A7A9A;--faint:#2A3D55;
+--border:rgba(74,180,255,.1);--border-hi:rgba(74,180,255,.28);
+--pill:100px;--r:12px;--r-sm:8px;
+--p3:var(--steel);--p4:var(--cyan);--p5:var(--purple);--p6:var(--amber);--pn:var(--muted)
+}
+html{scroll-behavior:smooth}
+body{background:var(--space);color:var(--text);font-family:'Outfit',sans-serif;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;min-height:100vh}
+#cvs{position:fixed;inset:0;z-index:2;pointer-events:none}
+.nebula-bg{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse 60% 40% at 5% 10%,rgba(36,100,200,.09) 0%,transparent 65%),radial-gradient(ellipse 45% 35% at 95% 85%,rgba(74,180,255,.06) 0%,transparent 60%)}
+.wrap{position:relative;z-index:10;max-width:980px;margin:0 auto;padding:0 clamp(1rem,4vw,2.5rem)}
+
+/* ── ORIGINAL HEADER ── */
+header{position:sticky;top:0;z-index:100;background:rgba(3,6,9,.92);backdrop-filter:blur(20px);border-bottom:.5px solid var(--border);padding:0 clamp(1rem,4vw,2.5rem)}
+.h-inner{max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit}
+.logo-mark{width:34px;height:34px;flex-shrink:0}
+.logo-name{font-family:'Cinzel',serif;font-size:20px;font-weight:700;letter-spacing:.2em;color:var(--star);text-shadow:0 0 24px rgba(74,180,255,.5);line-height:1}
+.logo-sub{display:block;font-family:'Outfit',sans-serif;font-size:8px;letter-spacing:.28em;text-transform:uppercase;color:var(--blue);margin-top:3px}
+.h-actions{display:flex;align-items:center;gap:10px}
+
+/* ── ORIGINAL BUTTON STYLES ── */
+.btn-ghost{height:32px;padding:0 14px;border-radius:var(--pill);border:.5px solid var(--border-hi);background:transparent;font-family:'Outfit',sans-serif;font-size:11.5px;letter-spacing:.06em;color:var(--muted);cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:6px}
+.btn-ghost:hover{border-color:var(--blue);color:var(--blue)}
+.btn-primary{height:32px;padding:0 16px;border-radius:var(--pill);border:.5px solid var(--blue);background:var(--blue-2);font-family:'Outfit',sans-serif;font-size:11.5px;letter-spacing:.06em;color:var(--star);cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:6px}
+.btn-primary:hover{background:var(--blue);box-shadow:0 0 18px rgba(74,180,255,.3)}
+
+/* ── ALL PILL TABS USE ORIGINAL sem-tab STYLE ── */
+.sem-tab{height:34px;padding:0 16px;border-radius:var(--pill);border:.5px solid var(--border-hi);background:transparent;font-family:'Outfit',sans-serif;font-size:12px;letter-spacing:.06em;color:var(--muted);cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.sem-tab:hover{border-color:var(--blue);color:var(--blue)}
+.sem-tab.active{background:var(--blue-2);color:var(--star);border-color:var(--blue);box-shadow:0 0 14px rgba(74,180,255,.18)}
+.sem-tab-add{height:34px;width:34px;border-radius:50%;border:.5px solid var(--border-hi);background:transparent;color:var(--muted);cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;font-size:18px}
+.sem-tab-add:hover{border-color:var(--green);color:var(--green)}
+.sem-tab-del{width:18px;height:18px;border-radius:50%;border:none;background:rgba(224,90,90,.15);color:var(--red);cursor:pointer;font-size:10px;margin-left:2px;display:flex;align-items:center;justify-content:center;transition:background .18s}
+.sem-tab-del:hover{background:rgba(224,90,90,.3)}
+
+.tabs-wrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.main-tabs-row{display:flex;align-items:center;gap:8px;padding:1.5rem 0 0;flex-wrap:wrap}
+.tab-divider{width:100%;height:.5px;background:var(--border);margin:.9rem 0 0}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+.app-body{padding-bottom:4rem}
+.section{margin-bottom:1.5rem}
+
+.hero{text-align:center;padding:clamp(3.5rem,8vw,5.5rem) 0 clamp(2rem,4vw,3rem)}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;border:.5px solid var(--border-hi);background:rgba(74,180,255,.05);color:var(--blue);font-size:10px;letter-spacing:.24em;text-transform:uppercase;padding:6px 20px;border-radius:var(--pill);margin-bottom:1.8rem;animation:fadeUp .6s .05s ease both}
+.badge-dot{width:5px;height:5px;border-radius:50%;background:var(--blue);box-shadow:0 0 7px var(--blue);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.6)}}
+.hero-title{font-family:'Cinzel',serif;font-size:clamp(2.2rem,6vw,4rem);font-weight:900;letter-spacing:.25em;line-height:1;color:var(--star);text-shadow:0 0 50px rgba(74,180,255,.45),0 0 120px rgba(74,180,255,.12);margin-bottom:.6rem;animation:fadeUp .7s .15s ease both}
+.hero-rule{width:80px;height:.5px;margin:.8rem auto 1.4rem;background:linear-gradient(90deg,transparent,var(--blue),transparent);animation:fadeUp .6s .22s ease both}
+.hero-tag{font-family:'Crimson Pro',serif;font-style:italic;font-size:clamp(1rem,2vw,1.2rem);color:var(--muted);font-weight:300;max-width:420px;margin:0 auto .4rem;animation:fadeUp .6s .28s ease both}
+.hero-sub{font-size:12px;color:var(--faint);letter-spacing:.08em;animation:fadeUp .6s .35s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+.school-bar{background:var(--card);border:.5px solid var(--border);border-radius:var(--r);padding:1rem 1.4rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;animation:fadeUp .5s .4s ease both}
+.school-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+.school-name{font-family:'Cinzel',serif;font-size:.95rem;font-weight:600;color:var(--star);letter-spacing:.05em}
+.school-change{font-size:10.5px;color:var(--blue);background:none;border:none;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(74,180,255,.35);font-family:'Outfit',sans-serif;letter-spacing:.04em;padding:0}
+.school-change:hover{color:var(--steel)}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(3,6,9,.85);backdrop-filter:blur(8px);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .25s}
+.modal-overlay.open{opacity:1;pointer-events:auto}
+.modal{background:var(--card-hi);border:.5px solid var(--border-hi);border-radius:14px;padding:2rem;width:100%;max-width:480px;transform:translateY(16px);transition:transform .25s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-title{font-family:'Cinzel',serif;font-size:1rem;font-weight:600;color:var(--star);letter-spacing:.1em;margin-bottom:1.2rem}
+.school-list{display:flex;flex-direction:column;gap:8px;margin-bottom:1.2rem}
+.school-opt{display:flex;align-items:center;gap:12px;padding:.8rem 1rem;border-radius:var(--r-sm);border:.5px solid var(--border);background:transparent;cursor:pointer;transition:all .18s;text-align:left;font-family:'Outfit',sans-serif;width:100%}
+.school-opt:hover:not(.disabled){border-color:var(--border-hi);background:rgba(74,180,255,.04)}
+.school-opt.selected{border-color:var(--blue);background:rgba(74,180,255,.07)}
+.school-opt.disabled{opacity:.42;cursor:not-allowed}
+.so-info{flex:1;min-width:0}
+.so-name{font-size:.9rem;color:var(--text);font-weight:500}
+.so-sub{font-size:11px;color:var(--faint)}
+.so-badge{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);border:.5px solid rgba(201,147,58,.4);background:rgba(201,147,58,.07);padding:2px 8px;border-radius:var(--pill);white-space:nowrap;flex-shrink:0}
+.so-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;margin-left:auto}
+.school-opt.selected .so-dot{background:var(--blue);box-shadow:0 0 6px var(--blue)}
+.modal-close{width:100%;padding:.75rem;border-radius:var(--r-sm);border:.5px solid var(--border);background:transparent;font-family:'Outfit',sans-serif;font-size:13px;color:var(--muted);cursor:pointer;transition:all .18s}
+.modal-close:hover{border-color:var(--border-hi);color:var(--text)}
+.inp-base{background:#132030;border:.5px solid rgba(74,180,255,.32);border-radius:var(--r-sm);color:#D8EAFF;font-family:'Outfit',sans-serif;font-size:13px;padding:.6rem .9rem;outline:none;transition:border-color .2s,box-shadow .2s;width:100%}
+.inp-base::placeholder{color:#5E86A8}
+.inp-base:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(74,180,255,.1);background:#162536}
+select.inp-base{cursor:pointer}
+select.inp-base option{background:#0c1628;color:var(--text)}
+
+.section-head{display:flex;align-items:center;gap:12px;margin-bottom:1rem;padding-bottom:.8rem;border-bottom:.5px solid var(--border);flex-wrap:wrap}
+.sh-dot{width:8px;height:8px;border-radius:50%;box-shadow:0 0 7px currentColor;flex-shrink:0}
+.sh-title{font-family:'Cinzel',serif;font-size:.95rem;font-weight:600;color:var(--star);letter-spacing:.1em}
+.sh-sub{font-size:11px;color:var(--faint);margin-left:6px;font-style:italic}
+.sh-spacer{flex:1}
+
+.courses-header{display:grid;grid-template-columns:2fr 1fr 80px 140px 36px;gap:8px;padding:0 .5rem .6rem;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.course-row{display:grid;grid-template-columns:2fr 1fr 80px 140px 36px;gap:8px;align-items:center;background:#0e1e35;border:.5px solid rgba(74,180,255,.22);border-radius:var(--r);padding:.7rem .8rem;margin-bottom:8px;transition:border-color .2s;animation:fadeUp .3s ease both}
+.course-row:hover{border-color:rgba(74,180,255,.42);background:#111f38}
+.course-row.has-grade{border-left:2px solid var(--row-accent,var(--border))}
+.btn-remove{width:32px;height:32px;border-radius:50%;border:none;background:rgba(224,90,90,.1);color:var(--red);cursor:pointer;font-size:16px;transition:background .18s;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.btn-remove:hover{background:rgba(224,90,90,.25)}
+.add-row-btn{width:100%;padding:.7rem;border-radius:var(--r);border:.5px dashed var(--border-hi);background:transparent;font-family:'Outfit',sans-serif;font-size:12.5px;letter-spacing:.06em;color:var(--muted);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px}
+.add-row-btn:hover{border-color:var(--green);color:var(--green);background:rgba(77,201,148,.04)}
+
+.results-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.result-card{background:var(--card);border:.5px solid var(--border);border-radius:var(--r);padding:1.2rem 1.4rem;position:relative;overflow:hidden}
+.result-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--rc-col,var(--blue)),transparent)}
+.result-card.primary{border-color:var(--border-hi);box-shadow:0 0 28px rgba(74,180,255,.08)}
+.rc-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-bottom:.5rem}
+.rc-value{font-family:'Cinzel',serif;font-size:2.6rem;font-weight:700;color:var(--star);line-height:1;letter-spacing:.02em}
+.rc-value span{font-size:1rem;color:var(--muted);font-family:'Outfit',sans-serif;font-weight:300}
+.rc-sub{font-size:11px;color:var(--faint);margin-top:.4rem;font-style:italic;font-family:'Crimson Pro',serif}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat-card{background:var(--card);border:.5px solid var(--border);border-radius:var(--r-sm);padding:.9rem 1rem;text-align:center}
+.stat-val{font-family:'Cinzel',serif;font-size:1.3rem;font-weight:600;color:var(--star)}
+.stat-lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:3px}
+.mp-summary{background:var(--card);border:.5px solid var(--border);border-radius:var(--r-sm);padding:.8rem 1.2rem;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.ss-item{text-align:center}
+.ss-val{font-family:'Cinzel',serif;font-size:1.1rem;font-weight:600;color:var(--blue)}
+.ss-lbl{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.divider{display:flex;align-items:center;gap:12px;margin:2rem 0 1.5rem;font-family:'Cinzel',serif;font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+.divider::before,.divider::after{content:'';flex:1;height:.5px;background:linear-gradient(90deg,transparent,var(--faint))}
+.divider::after{background:linear-gradient(90deg,var(--faint),transparent)}
+
+.grade-ref{background:var(--card);border:.5px solid var(--border);border-radius:var(--r);padding:1.2rem 1.4rem}
+.grade-table{width:100%;border-collapse:collapse;margin-top:.8rem}
+.grade-table th{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);padding:.4rem .6rem;text-align:left;border-bottom:.5px solid var(--border)}
+.grade-table td{padding:.5rem .6rem;font-size:13px;color:var(--muted);border-bottom:.5px solid rgba(74,180,255,.05)}
+.grade-table tr:last-child td{border-bottom:none}
+.grade-pill{display:inline-block;padding:2px 10px;border-radius:var(--pill);border:.5px solid;font-size:11px;font-weight:500;letter-spacing:.05em}
+.gp-a{color:var(--green);border-color:rgba(77,201,148,.35);background:rgba(77,201,148,.08)}
+.gp-b{color:var(--blue);border-color:rgba(74,180,255,.35);background:rgba(74,180,255,.08)}
+.gp-c{color:var(--amber);border-color:rgba(201,147,58,.35);background:rgba(201,147,58,.08)}
+.gp-d{color:var(--red);border-color:rgba(224,90,90,.35);background:rgba(224,90,90,.08)}
+.gp-f{color:#666;border-color:rgba(100,100,100,.3);background:rgba(100,100,100,.05)}
+
+.info-box{background:rgba(74,180,255,.04);border:.5px solid rgba(74,180,255,.14);border-radius:var(--r);padding:1.1rem 1.4rem}
+.info-box h4{font-family:'Cinzel',serif;font-size:.82rem;font-weight:600;color:var(--blue);letter-spacing:.1em;margin-bottom:.7rem}
+.info-box p{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:.5rem}
+.info-box p:last-child{margin-bottom:0}
+.info-box strong{color:var(--text);font-weight:500}
+
+.history-panel{background:var(--card);border:.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:1.2rem}
+.history-head{width:100%;padding:1rem 1.4rem;background:transparent;border:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:'Cinzel',serif;font-size:.9rem;font-weight:600;color:var(--star);letter-spacing:.08em}
+.history-head:hover{background:rgba(74,180,255,.03)}
+.history-body{display:none;padding:0 1.4rem 1.2rem;border-top:.5px solid var(--border)}
+.history-body.open{display:block}
+.chevron{transition:transform .25s;color:var(--muted);font-size:14px}
+.chevron.open{transform:rotate(180deg)}
+.hist-item{display:flex;align-items:center;justify-content:space-between;padding:.6rem .9rem;border-radius:var(--r-sm);background:rgba(74,180,255,.03);border:.5px solid var(--border);font-size:13px;margin-top:7px}
+.hist-date{color:var(--faint);font-size:11px}
+.hist-gpa{font-family:'Cinzel',serif;font-size:.88rem;font-weight:600;color:var(--blue)}
+.hist-empty{font-size:12.5px;color:var(--faint);font-style:italic;margin-top:.8rem}
+
+.phase-ref-card{background:var(--card);border:.5px solid var(--border);border-radius:var(--r);padding:1.2rem 1.4rem;margin-bottom:1.2rem}
+.phase-ref-title{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-bottom:.8rem}
+.phase-badges{display:flex;gap:8px;flex-wrap:wrap}
+.phase-badge{display:flex;align-items:center;gap:6px;padding:.35rem .85rem;border-radius:var(--pill);border:.5px solid;font-size:11.5px;font-weight:500}
+.pb-3{color:var(--steel);border-color:rgba(123,186,255,.35);background:rgba(123,186,255,.08)}
+.pb-4{color:var(--cyan);border-color:rgba(82,216,240,.35);background:rgba(82,216,240,.08)}
+.pb-5{color:var(--purple);border-color:rgba(155,127,244,.35);background:rgba(155,127,244,.08)}
+.pb-6{color:var(--amber);border-color:rgba(201,147,58,.35);background:rgba(201,147,58,.08)}
+.pb-n{color:var(--muted);border-color:rgba(90,122,154,.35);background:rgba(90,122,154,.08)}
+.pb-bonus{font-size:10px;opacity:.75}
+
+.w-mp-section{margin-bottom:1.4rem}
+.w-mp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem}
+.w-mp-name{font-family:'Cinzel',serif;font-size:.82rem;font-weight:600;color:var(--blue);letter-spacing:.1em}
+.w-mp-gpa{font-size:12px;color:var(--muted);display:flex;gap:12px}
+.w-mp-gpa span{color:var(--text)}
+.w-course-row{display:grid;grid-template-columns:2fr 80px 80px 130px 70px 70px;gap:8px;align-items:center;background:#0e1e35;border:.5px solid rgba(74,180,255,.18);border-radius:var(--r-sm);padding:.6rem .75rem;margin-bottom:6px;font-size:13px}
+.w-header-row{display:grid;grid-template-columns:2fr 80px 80px 130px 70px 70px;gap:8px;padding:0 .75rem .5rem;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.w-uw{text-align:center;color:var(--green);font-family:'Cinzel',serif;font-size:.8rem}
+.w-wt{text-align:center;color:var(--purple);font-family:'Cinzel',serif;font-size:.8rem}
+.w-empty{background:rgba(74,180,255,.03);border:.5px solid var(--border);border-radius:var(--r);padding:1.5rem;text-align:center;font-size:13px;color:var(--faint);font-style:italic}
+
+.scoir-card{background:var(--card);border:.5px solid var(--border);border-radius:var(--r);padding:1.2rem 1.4rem;margin-bottom:1.3rem}
+.scoir-title{font-family:'Cinzel',serif;font-size:.95rem;font-weight:600;color:var(--star);letter-spacing:.1em;margin-bottom:.25rem}
+.scoir-sub{font-size:11px;color:var(--faint);margin-bottom:1rem}
+.scoir-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:1rem}
+.scoir-field{display:flex;flex-direction:column;gap:5px}
+.scoir-label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+
+.proj-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.proj-card{background:var(--card);border:.5px solid var(--border);border-radius:var(--r);padding:1.2rem 1.4rem;text-align:center;position:relative;overflow:hidden}
+.proj-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--pc-col,var(--blue)),transparent)}
+.proj-label{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);margin-bottom:.5rem}
+.proj-val{font-family:'Cinzel',serif;font-size:2.6rem;font-weight:700;color:var(--star);line-height:1}
+.proj-val span{font-size:1rem;color:var(--muted);font-family:'Outfit',sans-serif;font-weight:300}
+.proj-sub{font-size:11px;color:var(--faint);margin-top:.4rem}
+.cgpa-courses{background:var(--card);border:.5px solid var(--border);border-radius:var(--r);padding:1.2rem 1.4rem}
+.cgpa-courses-title{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-bottom:.8rem}
+.cgpa-no-courses{font-size:13px;color:var(--faint);font-style:italic;text-align:center;padding:.8rem 0}
+
+.export-box{background:rgba(8,15,30,.9);border:.5px solid var(--border-hi);border-radius:var(--r-sm);padding:1rem;font-family:'Outfit',monospace;font-size:12px;color:var(--text);white-space:pre-wrap;word-break:break-all;max-height:220px;overflow-y:auto;margin:1rem 0;line-height:1.6}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:300;background:var(--card-hi);border:.5px solid var(--border-hi);border-radius:var(--r-sm);padding:.75rem 1.2rem;font-size:13px;color:var(--text);display:flex;align-items:center;gap:8px;transform:translateY(20px);opacity:0;transition:all .3s ease;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+footer{border-top:.5px solid var(--border);padding:1.5rem 0;text-align:center;font-size:11px;color:var(--faint)}
+@media(max-width:600px){
+.courses-header{display:none}
+.course-row{grid-template-columns:1fr 1fr!important;gap:6px}
+.course-row .inp-base:first-child{grid-column:1/-1}
+.results-grid,.proj-grid,.scoir-grid{grid-template-columns:1fr}
+.stats-row{grid-template-columns:1fr 1fr}
+.w-course-row,.w-header-row{grid-template-columns:2fr 60px 60px 90px 55px 55px}
+}
+</style>
+</head>
+<body>
+<canvas id="cvs"></canvas>
+<div class="nebula-bg"></div>
+
+<header>
+  <div class="h-inner">
+    <a class="logo" href="#">
+      <svg class="logo-mark" viewBox="0 0 34 34" fill="none">
+        <circle cx="17" cy="17" r="15.5" stroke="#4AB4FF" stroke-width=".5" opacity=".4"/>
+        <circle cx="17" cy="17" r="9.5" stroke="#4AB4FF" stroke-width=".5" opacity=".2"/>
+        <line x1="17" y1="1.5" x2="17" y2="7.5" stroke="#4AB4FF" stroke-width=".7" opacity=".65"/>
+        <line x1="17" y1="26.5" x2="17" y2="32.5" stroke="#4AB4FF" stroke-width=".7" opacity=".65"/>
+        <line x1="1.5" y1="17" x2="7.5" y2="17" stroke="#4AB4FF" stroke-width=".7" opacity=".65"/>
+        <line x1="26.5" y1="17" x2="32.5" y2="17" stroke="#4AB4FF" stroke-width=".7" opacity=".65"/>
+        <circle cx="17" cy="17" r="3.2" fill="#4AB4FF" opacity=".9"/>
+        <circle cx="17" cy="17" r="3.2" fill="white" opacity=".2"/>
+      </svg>
+      <div>
+        <div class="logo-name">ATLAS <span style="font-size:13px;letter-spacing:.08em;font-weight:400;color:var(--blue)">GPA</span></div>
+        <span class="logo-sub">CSW Academic Navigator</span>
+      </div>
+    </a>
+    <div class="h-actions">
+      <button class="btn-ghost" id="btnExport">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M3 5l3-4 3 4M1 9v1.5a.5.5 0 00.5.5h9a.5.5 0 00.5-.5V9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        Export
+      </button>
+      <button class="btn-ghost" id="btnReset">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 5.5a4.5 4.5 0 104.5-4.5H3M3 1L1 3l2 2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Reset
+      </button>
+      <button class="btn-primary" id="btnSave">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 8.5V9.5a.5.5 0 00.5.5h8a.5.5 0 00.5-.5V8.5M5.5 1v7M3 5.5L5.5 8l2.5-2.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Save
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="modal-overlay" id="schoolModal">
+  <div class="modal">
+    <div class="modal-title">Select Your School</div>
+    <div class="school-list" id="schoolList"></div>
+    <button class="modal-close" id="modalClose">Done</button>
+  </div>
+</div>
+<div class="modal-overlay" id="exportModal">
+  <div class="modal">
+    <div class="modal-title">Export Summary</div>
+    <div class="export-box" id="exportBox"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-primary" id="btnCopyExport" style="flex:1;height:38px;border-radius:8px;justify-content:center">Copy to Clipboard</button>
+      <button class="modal-close" id="exportClose" style="flex:1">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap app-body">
+
+  <!-- ── MAIN TABS — same sem-tab pill style ── -->
+  <div class="main-tabs-row" id="mainTabsRow">
+    <button class="sem-tab active" data-tab="gpa">⊕ GPA Calculator</button>
+    <button class="sem-tab" data-tab="weighted">⚖ Weighted GPA</button>
+    <button class="sem-tab" data-tab="cgpa">∑ Cumulative GPA</button>
+  </div>
+  <div class="tab-divider"></div>
+
+  <!-- ══ TAB 1: GPA CALCULATOR ══ -->
+  <div id="tab-gpa" class="tab-panel active">
+    <div class="hero">
+      <div class="hero-badge"><div class="badge-dot"></div>Charter School of Wilmington</div>
+      <h1 class="hero-title">ATLAS <span style="font-size:clamp(1.2rem,3vw,2rem);letter-spacing:.15em;font-weight:400;color:var(--blue)">GPA</span></h1>
+      <div class="hero-rule"></div>
+      <p class="hero-tag">Calculate your GPA with clarity.</p>
+      <p class="hero-sub">Weighted &amp; unweighted · Marking periods · CSW phase system</p>
+    </div>
+
+    <div class="school-bar section">
+      <span class="school-label">Active School</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="school-name" id="schoolDisplay">Charter School of Wilmington</span>
+        <button class="school-change" id="btnChangeSchool">Change</button>
+      </div>
+    </div>
+
+    <!-- MP TABS — original sem-tab style -->
+    <div class="tabs-wrap" id="mpTabs" style="margin-bottom:1.2rem"></div>
+
+    <div class="section">
+      <div class="section-head">
+        <div class="sh-dot" style="background:var(--blue);color:var(--blue)"></div>
+        <span class="sh-title">Course Entry</span>
+        <span class="sh-sub" id="mpLabel">—</span>
+        <div class="sh-spacer"></div>
+        <button class="sem-tab" id="btnGoWeighted" style="height:28px;font-size:11px;padding:0 12px">⚖ Weighted GPA →</button>
+      </div>
+      <div class="courses-header">
+        <span>Course Name</span><span>Grade</span><span>Credits</span><span>Phase</span><span></span>
+      </div>
+      <div id="courseRows"></div>
+      <button class="add-row-btn" id="btnAddRow">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1"/><path d="M7 4v6M4 7h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        Add Course
+      </button>
+    </div>
+
+    <div class="divider">Results</div>
+
+    <div class="section">
+      <div class="section-head">
+        <div class="sh-dot" style="background:var(--cyan);color:var(--cyan)"></div>
+        <span class="sh-title">Marking Period GPA</span>
+      </div>
+      <div class="mp-summary">
+        <div class="ss-item"><div class="ss-val" id="mpUW">—</div><div class="ss-lbl">Unweighted</div></div>
+        <div class="ss-item"><div class="ss-val" id="mpW" style="color:var(--purple)">—</div><div class="ss-lbl">Weighted</div></div>
+        <div class="ss-item"><div class="ss-val" id="mpCredits">0</div><div class="ss-lbl">Credits</div></div>
+        <div class="ss-item"><div class="ss-val" id="mpCount">0</div><div class="ss-lbl">Courses</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <div class="sh-dot" style="background:var(--purple);color:var(--purple)"></div>
+        <span class="sh-title">Cumulative GPA</span>
+        <span class="sh-sub">All marking periods</span>
+      </div>
+      <div class="results-grid">
+        <div class="result-card primary" style="--rc-col:var(--blue)">
+          <div class="rc-label">Unweighted GPA</div>
+          <div class="rc-value" id="cumUW">—<span>/4.0</span></div>
+          <div class="rc-sub">Standard CSW 4.0 scale</div>
+        </div>
+        <div class="result-card" style="--rc-col:var(--purple)">
+          <div class="rc-label">Weighted GPA</div>
+          <div class="rc-value" id="cumW">—<span>/5.0</span></div>
+          <div class="rc-sub">CSW phase-weighted</div>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-val" id="statCredits">0</div><div class="stat-lbl">Total Credits</div></div>
+        <div class="stat-card"><div class="stat-val" id="statCourses">0</div><div class="stat-lbl">Courses</div></div>
+        <div class="stat-card"><div class="stat-val" id="statMPs">0</div><div class="stat-lbl">Marking Periods</div></div>
+      </div>
+    </div>
+
+    <div class="divider">Reference</div>
+
+    <div class="section">
+      <div class="section-head">
+        <div class="sh-dot" style="background:var(--amber);color:var(--amber)"></div>
+        <span class="sh-title">Grade Scale</span>
+        <span class="sh-sub">Letter → GPA conversion</span>
+      </div>
+      <div class="grade-ref">
+        <table class="grade-table">
+          <thead><tr><th>Letter</th><th>% Range</th><th>4.0 Pts</th><th>+ Phase 4</th><th>+ Phase 5</th><th>+ AP/DE</th></tr></thead>
+          <tbody id="gradeTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section info-box">
+      <h4>✦ CSW Phase Weighting System</h4>
+      <p><strong>Phase 3</strong> (College Prep) = +0.00 · <strong>Phase 4</strong> (Accelerated) = +0.25 · <strong>Phase 5</strong> (Honors) = +0.50 · <strong>AP / Dual Enrollment</strong> = +1.00. Non-phased courses (Health, PE, Driver Ed) receive no bonus. CSW does not rank students.</p>
+      <p>GPA = Σ(quality points × credits) ÷ total credits attempted.</p>
+    </div>
+
+    <div class="section history-panel">
+      <button class="history-head" id="historyToggle">
+        <span style="display:flex;align-items:center;gap:10px">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1"/><path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Calculation History
+        </span>
+        <span class="chevron" id="histChevron">▾</span>
+      </button>
+      <div class="history-body" id="historyBody">
+        <div id="historyList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB 2: WEIGHTED GPA ══ -->
+  <div id="tab-weighted" class="tab-panel">
+    <div class="hero">
+      <div class="hero-badge" style="border-color:rgba(155,127,244,.35);background:rgba(155,127,244,.06);color:var(--purple)"><div class="badge-dot" style="background:var(--purple);box-shadow:0 0 7px var(--purple)"></div>CSW Phase System</div>
+      <h1 class="hero-title">Weighted <span style="font-size:clamp(1.2rem,3vw,2rem);letter-spacing:.15em;font-weight:400;color:var(--purple)">GPA</span></h1>
+      <div class="hero-rule" style="background:linear-gradient(90deg,transparent,var(--purple),transparent)"></div>
+      <p class="hero-tag" style="color:var(--muted)">Auto-imported from GPA Calculator</p>
+      <p class="hero-sub">CSW phase bonuses applied · All marking periods</p>
+    </div>
+
+    <div class="phase-ref-card section">
+      <div class="phase-ref-title">Phase Bonus Reference — Charter School of Wilmington</div>
+      <div class="phase-badges">
+        <div class="phase-badge pb-n">Non-Phased <span class="pb-bonus">+0.00</span></div>
+        <div class="phase-badge pb-3">Phase 3 · College Prep <span class="pb-bonus">+0.00</span></div>
+        <div class="phase-badge pb-4">Phase 4 · Accelerated <span class="pb-bonus">+0.25</span></div>
+        <div class="phase-badge pb-5">Phase 5 · Honors <span class="pb-bonus">+0.50</span></div>
+        <div class="phase-badge pb-6">Phase 6 · AP / DE <span class="pb-bonus">+1.00</span></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <div class="sh-dot" style="background:var(--purple);color:var(--purple)"></div>
+        <span class="sh-title">Weighted Results</span>
+        <span class="sh-sub">All marking periods</span>
+      </div>
+      <div class="results-grid">
+        <div class="result-card primary" style="--rc-col:var(--blue)">
+          <div class="rc-label">Unweighted GPA</div>
+          <div class="rc-value" id="wCumUW">—<span>/4.0</span></div>
+          <div class="rc-sub">No phase bonuses</div>
+        </div>
+        <div class="result-card" style="--rc-col:var(--purple)">
+          <div class="rc-label">Weighted GPA</div>
+          <div class="rc-value" id="wCumW">—<span>/5.0</span></div>
+          <div class="rc-sub">With CSW phase bonuses</div>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-val" id="wStatCredits">0</div><div class="stat-lbl">Credits</div></div>
+        <div class="stat-card"><div class="stat-val" id="wStatCourses">0</div><div class="stat-lbl">Courses</div></div>
+        <div class="stat-card"><div class="stat-val" id="wStatBonus" style="color:var(--amber)">0.00</div><div class="stat-lbl">Avg Bonus</div></div>
+      </div>
+    </div>
+
+    <div class="divider">By Marking Period</div>
+
+    <div class="section">
+      <div class="w-header-row">
+        <span>Course</span><span>Grade</span><span>Credits</span><span>Phase</span><span>UW Pts</span><span>W Pts</span>
+      </div>
+      <div id="weightedMPList"></div>
+    </div>
+  </div>
+
+  <!-- ══ TAB 3: CUMULATIVE GPA ══ -->
+  <div id="tab-cgpa" class="tab-panel">
+    <div class="hero">
+      <div class="hero-badge" style="border-color:rgba(77,201,148,.35);background:rgba(77,201,148,.06);color:var(--green)"><div class="badge-dot" style="background:var(--green);box-shadow:0 0 7px var(--green)"></div>Scoir Integration</div>
+      <h1 class="hero-title">Cumulative <span style="font-size:clamp(1.2rem,3vw,2rem);letter-spacing:.15em;font-weight:400;color:var(--green)">GPA</span></h1>
+      <div class="hero-rule" style="background:linear-gradient(90deg,transparent,var(--green),transparent)"></div>
+      <p class="hero-tag" style="color:var(--muted)">Enter your Scoir CGPA</p>
+      <p class="hero-sub">Projects combined GPA with current marking period courses</p>
+    </div>
+
+    <div class="scoir-card section">
+      <div class="scoir-title">Scoir Snapshot</div>
+      <div class="scoir-sub">Enter your cumulative GPA as reported in Scoir</div>
+      <div class="scoir-grid">
+        <div class="scoir-field">
+          <label class="scoir-label">Unweighted CGPA</label>
+          <input class="inp-base" id="scoirUW" type="number" min="0" max="4" step=".01" placeholder="e.g. 3.75"/>
+        </div>
+        <div class="scoir-field">
+          <label class="scoir-label">Weighted CGPA</label>
+          <input class="inp-base" id="scoirW" type="number" min="0" max="5" step=".01" placeholder="e.g. 4.20"/>
+        </div>
+        <div class="scoir-field">
+          <label class="scoir-label">Credits Completed</label>
+          <input class="inp-base" id="scoirCredits" type="number" min="0" max="30" step=".5" placeholder="e.g. 12"/>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap">
+        <div class="scoir-field" style="flex:1;min-width:160px">
+          <label class="scoir-label">Last Updated</label>
+          <input class="inp-base" id="scoirDate" type="date"/>
+        </div>
+        <button class="btn-primary" id="btnProject" style="height:38px;padding:0 20px;border-radius:var(--pill);white-space:nowrap;margin-bottom:0">↻ Calculate Projection</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <div class="sh-dot" style="background:var(--green);color:var(--green)"></div>
+        <span class="sh-title">GPA Projection</span>
+        <span class="sh-sub">Scoir baseline + new coursework</span>
+      </div>
+      <div class="proj-grid">
+        <div class="proj-card" style="--pc-col:var(--steel)">
+          <div class="proj-label">Current (Scoir)</div>
+          <div class="proj-val" id="projScoirUW">—<span>/4.0</span></div>
+          <div class="proj-sub">Unweighted</div>
+        </div>
+        <div class="proj-card" style="--pc-col:var(--green)">
+          <div class="proj-label">Projected UW</div>
+          <div class="proj-val" id="projNewUW">—<span>/4.0</span></div>
+          <div class="proj-sub">After new courses</div>
+        </div>
+        <div class="proj-card" style="--pc-col:var(--purple)">
+          <div class="proj-label">Projected Weighted</div>
+          <div class="proj-val" id="projNewW">—<span>/5.0</span></div>
+          <div class="proj-sub">After new courses</div>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-val" id="projCreditsNew">0</div><div class="stat-lbl">New Credits</div></div>
+        <div class="stat-card"><div class="stat-val" id="projCreditsTotal">0</div><div class="stat-lbl">Total Credits</div></div>
+        <div class="stat-card"><div class="stat-val" id="projToGrad" style="color:var(--amber)">24.5</div><div class="stat-lbl">Needed to Grad</div></div>
+      </div>
+    </div>
+
+    <div class="divider">New Coursework</div>
+
+    <div class="section cgpa-courses">
+      <div class="cgpa-courses-title">Courses imported from GPA Calculator</div>
+      <div class="w-header-row" style="padding:0 .75rem .5rem">
+        <span>Course</span><span>Grade</span><span>Credits</span><span>Phase</span><span>UW Pts</span><span>W Pts</span>
+      </div>
+      <div id="cgpaCourseList"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer><div class="wrap">ATLAS GPA — CSW Edition · Independent academic tool · Not affiliated with College Board or any school</div></footer>
+<div class="toast" id="toast"><div class="toast-dot"></div><span id="toastMsg">Saved</span></div>
+
+<script>
+(function(){
+const c=document.getElementById('cvs'),ctx=c.getContext('2d');
+let W=0,H=0,field=[],clusters=[];
+const CD=[
+  {ax:.06,ay:.08,stars:[{dx:0,dy:0,r:3.8,a:.92},{dx:110,dy:40,r:2.8,a:.78},{dx:55,dy:95,r:2.2,a:.65},{dx:175,dy:80,r:2.5,a:.70},{dx:-30,dy:130,r:1.8,a:.58},{dx:140,dy:150,r:2.0,a:.62},{dx:70,dy:190,r:1.6,a:.50}],lines:[[0,1],[1,2],[1,3],[2,4],[3,5],[2,5],[5,6]],col:'190,218,255'},
+  {ax:.94,ay:.06,stars:[{dx:0,dy:0,r:3.5,a:.88},{dx:-90,dy:55,r:2.4,a:.72},{dx:-160,dy:30,r:2.0,a:.60},{dx:-55,dy:130,r:2.6,a:.75},{dx:-130,dy:150,r:1.8,a:.55},{dx:-200,dy:100,r:2.2,a:.65}],lines:[[0,1],[1,2],[1,3],[3,4],[4,5],[2,5]],col:'180,210,255'},
+  {ax:.05,ay:.88,stars:[{dx:0,dy:0,r:3.2,a:.85},{dx:80,dy:-60,r:2.6,a:.70},{dx:160,dy:-30,r:2.0,a:.62},{dx:30,dy:-130,r:2.4,a:.68},{dx:120,dy:-140,r:1.8,a:.56},{dx:200,dy:-90,r:2.8,a:.75},{dx:240,dy:-160,r:1.6,a:.50},{dx:90,dy:-200,r:2.0,a:.60}],lines:[[0,1],[1,2],[0,3],[3,4],[4,7],[1,5],[5,6],[2,5]],col:'185,215,255'},
+  {ax:.93,ay:.90,stars:[{dx:0,dy:0,r:3.6,a:.90},{dx:-70,dy:-80,r:2.4,a:.72},{dx:-150,dy:-40,r:2.8,a:.78},{dx:-100,dy:-160,r:2.0,a:.60},{dx:-200,dy:-120,r:2.4,a:.68},{dx:-30,dy:-200,r:1.8,a:.55},{dx:-180,dy:-230,r:1.6,a:.48}],lines:[[0,1],[1,2],[1,3],[3,5],[2,4],[4,6],[3,6]],col:'190,220,255'},
+  {ax:.97,ay:.44,stars:[{dx:0,dy:0,r:2.8,a:.80},{dx:-80,dy:-50,r:2.0,a:.62},{dx:-120,dy:30,r:1.8,a:.55},{dx:-60,dy:100,r:2.2,a:.65},{dx:-160,dy:70,r:1.6,a:.50}],lines:[[0,1],[0,2],[2,3],[1,4],[3,4]],col:'175,210,255'}
+];
+function lcg(s){s=s>>>0;return()=>{s=(Math.imul(1664525,s)+1013904223)>>>0;return s/4294967296}}
+function resize(){W=c.width=innerWidth;H=c.height=innerHeight;
+  clusters=CD.map(d=>{const ox=d.ax*W,oy=d.ay*H;return{stars:d.stars.map((s,i)=>({x:ox+s.dx,y:oy+s.dy,r:s.r,baseA:s.a,sp:.006+i*.0018,ph:i*1.3,sparkle:s.r>=3})),lines:d.lines,col:d.col}});
+  const rand=lcg(0xABCD1234);field=[];
+  for(let i=0;i<700;i++){const sp=i<30;field.push({x:rand()*W,y:rand()*H,r:sp?(rand()*.8+1):(rand()*1.2+.25),baseA:sp?(rand()*.35+.55):(rand()*.50+.18),sp:rand()*.016+.002,ph:rand()*Math.PI*2,sparkle:sp})}}
+let t=0;
+function draw(){ctx.clearRect(0,0,W,H);t+=.005;
+  field.forEach(s=>{const al=s.baseA*(.55+.45*Math.sin(t*s.sp*60+s.ph));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(190,218,255,${al.toFixed(3)})`;ctx.fill();if(s.sparkle){const a=s.r*3.5;ctx.strokeStyle=`rgba(200,224,255,${(al*.38).toFixed(3)})`;ctx.lineWidth=.45;ctx.beginPath();ctx.moveTo(s.x,s.y-a);ctx.lineTo(s.x,s.y+a);ctx.moveTo(s.x-a,s.y);ctx.lineTo(s.x+a,s.y);ctx.stroke()}});
+  clusters.forEach(cl=>{
+    cl.lines.forEach(([a,b])=>{const sa=cl.stars[a],sb=cl.stars[b];const alA=sa.baseA*(.5+.5*Math.sin(t*sa.sp*60+sa.ph));const alB=sb.baseA*(.5+.5*Math.sin(t*sb.sp*60+sb.ph));ctx.beginPath();ctx.moveTo(sa.x,sa.y);ctx.lineTo(sb.x,sb.y);ctx.strokeStyle=`rgba(${cl.col},${(((alA+alB)*.5)*.28).toFixed(3)})`;ctx.lineWidth=.65;ctx.stroke()});
+    cl.stars.forEach(s=>{const al=s.baseA*(.5+.5*Math.sin(t*s.sp*60+s.ph));const g=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*4);g.addColorStop(0,`rgba(${cl.col},${(al*.3).toFixed(3)})`);g.addColorStop(1,`rgba(${cl.col},0)`);ctx.beginPath();ctx.arc(s.x,s.y,s.r*4,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(${cl.col},${al.toFixed(3)})`;ctx.fill();ctx.beginPath();ctx.arc(s.x,s.y,s.r*.35,0,Math.PI*2);ctx.fillStyle=`rgba(230,242,255,${(al*.85).toFixed(3)})`;ctx.fill();if(s.sparkle){const a=s.r*3.8;ctx.strokeStyle=`rgba(${cl.col},${(al*.4).toFixed(3)})`;ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(s.x,s.y-a);ctx.lineTo(s.x,s.y+a);ctx.moveTo(s.x-a,s.y);ctx.lineTo(s.x+a,s.y);ctx.stroke()}})});
+  requestAnimationFrame(draw)}
+resize();draw();addEventListener('resize',resize);
+})();
+
+const SCHOOLS=[
+  {id:'csw',name:'Charter School of Wilmington',sub:'Wilmington, DE — Phase-weighted GPA system',active:true},
+  {id:'gen',name:'Generic High School',sub:'Coming soon',active:false},
+  {id:'cchs',name:'Cape Henlopen HS',sub:'Coming soon',active:false},
+  {id:'salesianum',name:'Salesianum School',sub:'Coming soon',active:false}
+];
+const CSW_SCALE=[
+  {letter:'A', pct:'93–100',pts:4.0,cls:'gp-a'},{letter:'A-',pct:'90–92',pts:3.7,cls:'gp-a'},
+  {letter:'B+',pct:'87–89',pts:3.3,cls:'gp-b'},{letter:'B', pct:'83–86',pts:3.0,cls:'gp-b'},
+  {letter:'B-',pct:'80–82',pts:2.7,cls:'gp-b'},{letter:'C+',pct:'77–79',pts:2.3,cls:'gp-c'},
+  {letter:'C', pct:'73–76',pts:2.0,cls:'gp-c'},{letter:'C-',pct:'70–72',pts:1.7,cls:'gp-c'},
+  {letter:'D', pct:'66–69',pts:1.0,cls:'gp-d'},{letter:'F', pct:'≤65',  pts:0.0,cls:'gp-f'}
+];
+const PHASE_BONUS={'none':0,'3':0,'4':.25,'5':.5,'6':1.0};
+const PHASE_LABELS={'none':'Non-Phased','3':'Phase 3 · College Prep','4':'Phase 4 · Accelerated','5':'Phase 5 · Honors','6':'AP / Dual Enrollment'};
+const PHASE_COLORS={'none':'var(--pn)','3':'var(--p3)','4':'var(--p4)','5':'var(--p5)','6':'var(--p6)'};
+const MP_NAMES=['MP1','MP2','MP3','MP4','MP5','MP6','MP7','MP8'];
+
+function uid(){return Math.random().toString(36).slice(2,8)}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function fmt(n){return n===null||n===undefined||isNaN(n)?'—':n.toFixed(2)}
+function gradeToPoints(g){
+  if(!g||!g.trim()) return null;
+  const m=g.trim().toUpperCase();
+  const found=CSW_SCALE.find(r=>r.letter===m);
+  if(found) return found.pts;
+  const n=parseFloat(m);
+  if(!isNaN(n)){
+    if(n>=93)return 4.0;if(n>=90)return 3.7;if(n>=87)return 3.3;if(n>=83)return 3.0;
+    if(n>=80)return 2.7;if(n>=77)return 2.3;if(n>=73)return 2.0;if(n>=70)return 1.7;
+    if(n>=66)return 1.0;return 0.0;
+  }
+  return null;
+}
+function phaseBonus(p){return PHASE_BONUS[String(p)]||0}
+function phaseColor(p){return PHASE_COLORS[String(p)]||'var(--pn)'}
+function emptyRows(){return Array.from({length:8},()=>({id:uid(),name:'',grade:'',credits:'1',phase:'none'}))}
+
+let state={
+  school:'Charter School of Wilmington',
+  markingPeriods:[{id:'mp1',name:'MP1',courses:emptyRows()}],
+  activeMP:0,activeMainTab:'gpa',
+  scoir:{uw:'',w:'',credits:'',date:''},
+  history:[]
+};
+
+function calcMPGPA(courses){
+  let uwS=0,wS=0,cr=0,cnt=0;
+  courses.forEach(c=>{const pts=gradeToPoints(c.grade),crd=parseFloat(c.credits)||0;if(pts===null||!crd)return;cnt++;cr+=crd;uwS+=pts*crd;wS+=(pts+phaseBonus(c.phase))*crd});
+  if(!cr)return{uw:null,w:null,credits:0,count:cnt};
+  return{uw:uwS/cr,w:wS/cr,credits:cr,count:cnt};
+}
+function calcCumGPA(){
+  let uwS=0,wS=0,totCr=0,totCnt=0;
+  state.markingPeriods.forEach(mp=>{const r=calcMPGPA(mp.courses);if(r.credits){uwS+=r.uw*r.credits;wS+=r.w*r.credits;totCr+=r.credits}totCnt+=r.count});
+  if(!totCr)return{uw:null,w:null,credits:0,count:totCnt};
+  return{uw:uwS/totCr,w:wS/totCr,credits:totCr,count:totCnt};
+}
+function getAllCourses(){
+  const all=[];
+  state.markingPeriods.forEach(mp=>{mp.courses.forEach(c=>{const pts=gradeToPoints(c.grade),cr=parseFloat(c.credits)||0;if(pts!==null&&cr>0&&c.grade)all.push({...c,mpName:mp.name,pts,cr,bonus:phaseBonus(c.phase)})})});
+  return all;
+}
+
+function switchMainTab(tab){
+  state.activeMainTab=tab;
+  document.querySelectorAll('#mainTabsRow .sem-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+tab));
+  if(tab==='weighted')renderWeightedTab();
+  if(tab==='cgpa')renderCGPATab();
+}
+document.querySelectorAll('#mainTabsRow .sem-tab').forEach(btn=>btn.addEventListener('click',()=>switchMainTab(btn.dataset.tab)));
+
+function renderMPTabs(){
+  const wrap=document.getElementById('mpTabs');wrap.innerHTML='';
+  state.markingPeriods.forEach((mp,i)=>{
+    const btn=document.createElement('button');
+    btn.className='sem-tab'+(i===state.activeMP?' active':'');
+    btn.dataset.i=i;
+    btn.innerHTML=`<span class="sem-tab-name">${esc(mp.name)}</span>${state.markingPeriods.length>1?`<span class="sem-tab-del" data-i="${i}">✕</span>`:''}`;
+    btn.addEventListener('click',e=>{
+      if(e.target.classList.contains('sem-tab-del')){if(state.markingPeriods.length<2)return;state.markingPeriods.splice(i,1);if(state.activeMP>=state.markingPeriods.length)state.activeMP=state.markingPeriods.length-1;saveLocal();renderAll();}
+      else{state.activeMP=i;saveLocal();renderAll();}
+    });
+    btn.addEventListener('dblclick',()=>{const n=prompt('Rename marking period:',state.markingPeriods[i].name);if(n&&n.trim()){state.markingPeriods[i].name=n.trim();saveLocal();renderMPTabs();}});
+    wrap.appendChild(btn);
+  });
+  const add=document.createElement('button');add.className='sem-tab-add';add.title='Add marking period';add.textContent='+';
+  add.addEventListener('click',()=>{
+    const ex=state.markingPeriods.map(m=>m.name);
+    const next=MP_NAMES.find(n=>!ex.includes(n))||`MP${state.markingPeriods.length+1}`;
+    state.markingPeriods.push({id:uid(),name:next,courses:emptyRows()});state.activeMP=state.markingPeriods.length-1;saveLocal();renderAll();
+  });
+  wrap.appendChild(add);
+  document.getElementById('mpLabel').textContent=state.markingPeriods[state.activeMP]?.name||'';
+}
+
+function renderRows(){
+  const container=document.getElementById('courseRows');container.innerHTML='';
+  const mp=state.markingPeriods[state.activeMP];if(!mp)return;
+  mp.courses.forEach((c,i)=>{
+    const row=document.createElement('div');row.className='course-row';
+    const pts=gradeToPoints(c.grade);row.style.cssText=`--row-accent:${phaseColor(c.phase)}`;
+    if(pts!==null&&c.grade)row.classList.add('has-grade');
+    row.innerHTML=`
+      <input class="inp-base" type="text" placeholder="Course name…" value="${esc(c.name)}" data-field="name" data-i="${i}"/>
+      <input class="inp-base" type="text" placeholder="A, B+, 91…" value="${esc(c.grade)}" data-field="grade" data-i="${i}" style="text-align:center"/>
+      <input class="inp-base" type="number" min=".5" max="4" step=".5" value="${c.credits}" data-field="credits" data-i="${i}" style="text-align:center"/>
+      <select class="inp-base" data-field="phase" data-i="${i}">
+        ${Object.entries(PHASE_LABELS).map(([v,l])=>`<option value="${v}"${c.phase===v?' selected':''}>${l}</option>`).join('')}
+      </select>
+      <button class="btn-remove" data-i="${i}" title="Remove">×</button>`;
+    row.querySelectorAll('[data-field]').forEach(el=>{el.addEventListener('input',handleInput);el.addEventListener('change',handleInput)});
+    row.querySelector('.btn-remove').addEventListener('click',e=>{mp.courses.splice(parseInt(e.currentTarget.dataset.i),1);saveLocal();renderAll()});
+    container.appendChild(row);
+  });
+}
+function handleInput(e){
+  const field=e.target.dataset.field,i=parseInt(e.target.dataset.i);
+  const mp=state.markingPeriods[state.activeMP];if(!mp)return;
+  mp.courses[i][field]=e.target.value;saveLocal();renderResults();
+  const row=e.target.closest('.course-row');
+  if(row){row.style.setProperty('--row-accent',phaseColor(mp.courses[i].phase));const pts=gradeToPoints(mp.courses[i].grade);row.classList.toggle('has-grade',pts!==null&&!!mp.courses[i].grade)}
+}
+function renderResults(){
+  const mp=state.markingPeriods[state.activeMP];const sr=calcMPGPA(mp?.courses||[]);
+  document.getElementById('mpUW').textContent=fmt(sr.uw);document.getElementById('mpW').textContent=fmt(sr.w);
+  document.getElementById('mpCredits').textContent=sr.credits.toFixed(1).replace('.0','');document.getElementById('mpCount').textContent=sr.count;
+  const cr=calcCumGPA();
+  document.getElementById('cumUW').innerHTML=`${fmt(cr.uw)}<span>/4.0</span>`;document.getElementById('cumW').innerHTML=`${fmt(cr.w)}<span>/5.0</span>`;
+  document.getElementById('statCredits').textContent=cr.credits.toFixed(1).replace('.0','');document.getElementById('statCourses').textContent=cr.count;document.getElementById('statMPs').textContent=state.markingPeriods.length;
+}
+function renderGradeTable(){
+  document.getElementById('gradeTableBody').innerHTML=CSW_SCALE.map(r=>`
+    <tr>
+      <td><span class="grade-pill ${r.cls}">${r.letter}</span></td>
+      <td style="color:var(--faint)">${r.pct}</td>
+      <td style="color:var(--text);font-weight:500">${r.pts.toFixed(1)}</td>
+      <td style="color:var(--cyan)">${r.pts>0?(r.pts+.25).toFixed(2):'—'}</td>
+      <td style="color:var(--purple)">${r.pts>0?(r.pts+.5).toFixed(2):'—'}</td>
+      <td style="color:var(--amber)">${r.pts>0?(r.pts+1).toFixed(2):'—'}</td>
+    </tr>`).join('');
+}
+function renderHistory(){
+  const list=document.getElementById('historyList');
+  if(!state.history.length){list.innerHTML='<div class="hist-empty">No saved calculations yet. Hit Save to record a snapshot.</div>';return;}
+  list.innerHTML=state.history.slice().reverse().slice(0,10).map(h=>`
+    <div class="hist-item">
+      <span style="color:var(--muted);font-size:12px">${h.label}</span>
+      <span class="hist-date">${h.date}</span>
+      <div style="display:flex;gap:14px"><span class="hist-gpa">${h.uw} UW</span><span class="hist-gpa" style="color:var(--purple)">${h.w} W</span></div>
+    </div>`).join('');
+}
+function renderSchoolList(){
+  const list=document.getElementById('schoolList');
+  list.innerHTML=SCHOOLS.map(s=>`
+    <button class="school-opt${s.active&&state.school===s.name?' selected':''}${!s.active?' disabled':''}" data-name="${esc(s.name)}"${!s.active?' disabled':''}>
+      <div class="so-info"><div class="so-name">${esc(s.name)}</div><div class="so-sub">${esc(s.sub)}</div></div>
+      ${!s.active?'<span class="so-badge">Coming Soon</span>':'<div class="so-dot"></div>'}
+    </button>`).join('');
+  list.querySelectorAll('.school-opt:not(.disabled)').forEach(btn=>{
+    btn.addEventListener('click',()=>{state.school=btn.dataset.name;document.getElementById('schoolDisplay').textContent=state.school;saveLocal();renderSchoolList()});
+  });
+}
+function renderWeightedTab(){
+  const cr=calcCumGPA();
+  document.getElementById('wCumUW').innerHTML=`${fmt(cr.uw)}<span>/4.0</span>`;document.getElementById('wCumW').innerHTML=`${fmt(cr.w)}<span>/5.0</span>`;
+  document.getElementById('wStatCredits').textContent=cr.credits.toFixed(1).replace('.0','');document.getElementById('wStatCourses').textContent=cr.count;
+  const all=getAllCourses();let tb=0;all.forEach(c=>tb+=c.bonus);
+  document.getElementById('wStatBonus').textContent=all.length?fmt(tb/all.length):'0.00';
+  const container=document.getElementById('weightedMPList');container.innerHTML='';
+  if(!all.length){container.innerHTML='<div class="w-empty">No courses with grades yet. Add courses in the GPA Calculator tab.</div>';return;}
+  state.markingPeriods.forEach(mp=>{
+    const courses=mp.courses.filter(c=>{const pts=gradeToPoints(c.grade);return pts!==null&&parseFloat(c.credits)>0&&c.grade});
+    if(!courses.length)return;
+    const mpGPA=calcMPGPA(mp.courses);const sec=document.createElement('div');sec.className='w-mp-section';
+    sec.innerHTML=`<div class="w-mp-header"><span class="w-mp-name">${esc(mp.name)}</span><div class="w-mp-gpa"><span>UW: <span>${fmt(mpGPA.uw)}</span></span><span>W: <span style="color:var(--purple)">${fmt(mpGPA.w)}</span></span><span>${mpGPA.credits} CR</span></div></div>`
+    +courses.map(c=>{const pts=gradeToPoints(c.grade),bonus=phaseBonus(c.phase),crd=parseFloat(c.credits)||0,pc=phaseColor(c.phase);
+      return`<div class="w-course-row"><span style="color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(c.name)}">${esc(c.name)||'Unnamed'}</span><span style="text-align:center;font-family:'Cinzel',serif;font-weight:600;font-size:.82rem;color:${pc}">${esc(c.grade)}</span><span style="text-align:center;color:var(--muted)">${crd}</span><span style="color:${pc};font-size:11px;text-align:center">${PHASE_LABELS[c.phase]||'—'}</span><span class="w-uw">${pts!==null?pts.toFixed(1):'—'}</span><span class="w-wt">${pts!==null?(pts+bonus).toFixed(2):'—'}</span></div>`
+    }).join('');
+    container.appendChild(sec);
+  });
+}
+function renderCGPATab(){
+  const sUW=parseFloat(state.scoir.uw)||null,sW=parseFloat(state.scoir.w)||null,sCr=parseFloat(state.scoir.credits)||0;
+  document.getElementById('projScoirUW').innerHTML=sUW?`${sUW.toFixed(2)}<span>/4.0</span>`:'—<span>/4.0</span>';
+  const all=getAllCourses();let nUW=0,nW=0,nCr=0;all.forEach(c=>{nUW+=c.pts*c.cr;nW+=(c.pts+c.bonus)*c.cr;nCr+=c.cr});
+  let pUW=null,pW=null;
+  if(sUW!==null&&sCr>0&&nCr>0)pUW=(sUW*sCr+nUW)/(sCr+nCr);else if(sUW===null&&nCr>0)pUW=nUW/nCr;
+  if(sW!==null&&sCr>0&&nCr>0)pW=(sW*sCr+nW)/(sCr+nCr);else if(sW===null&&nCr>0)pW=nW/nCr;
+  document.getElementById('projNewUW').innerHTML=`${fmt(pUW)}<span>/4.0</span>`;document.getElementById('projNewW').innerHTML=`${fmt(pW)}<span>/5.0</span>`;
+  document.getElementById('projCreditsNew').textContent=nCr.toFixed(1).replace('.0','');document.getElementById('projCreditsTotal').textContent=(sCr+nCr).toFixed(1).replace('.0','');
+  document.getElementById('projToGrad').textContent=Math.max(0,24.5-sCr-nCr).toFixed(1).replace('.0','');
+  const list=document.getElementById('cgpaCourseList');
+  if(!all.length){list.innerHTML='<div class="cgpa-no-courses">No courses with grades yet. Add courses in the GPA Calculator tab.</div>';return;}
+  list.innerHTML=all.map(c=>`<div class="w-course-row" style="margin-bottom:6px"><span style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.name)||'Unnamed'} <span style="color:var(--faint);font-size:10px">${esc(c.mpName)}</span></span><span style="text-align:center;font-family:'Cinzel',serif;font-size:.8rem;font-weight:600;color:${phaseColor(c.phase)}">${esc(c.grade)}</span><span style="text-align:center;color:var(--muted)">${c.cr}</span><span style="color:${phaseColor(c.phase)};font-size:11px;text-align:center">${PHASE_LABELS[c.phase]||'—'}</span><span class="w-uw">${c.pts.toFixed(1)}</span><span class="w-wt">${(c.pts+c.bonus).toFixed(2)}</span></div>`).join('');
+}
+function renderAll(){renderMPTabs();renderRows();renderResults();renderGradeTable();renderHistory();if(state.activeMainTab==='weighted')renderWeightedTab();if(state.activeMainTab==='cgpa')renderCGPATab();}
+
+document.getElementById('btnAddRow').addEventListener('click',()=>{const mp=state.markingPeriods[state.activeMP];mp.courses.push({id:uid(),name:'',grade:'',credits:'1',phase:'none'});saveLocal();renderRows();renderResults()});
+document.getElementById('btnGoWeighted').addEventListener('click',()=>switchMainTab('weighted'));
+document.getElementById('btnChangeSchool').addEventListener('click',()=>{renderSchoolList();document.getElementById('schoolModal').classList.add('open')});
+document.getElementById('modalClose').addEventListener('click',()=>document.getElementById('schoolModal').classList.remove('open'));
+document.getElementById('schoolModal').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open')});
+document.getElementById('historyToggle').addEventListener('click',()=>{document.getElementById('historyBody').classList.toggle('open');document.getElementById('histChevron').classList.toggle('open')});
+document.getElementById('btnSave').addEventListener('click',()=>{const cum=calcCumGPA();state.history.push({label:state.markingPeriods[state.activeMP]?.name||'Snapshot',date:new Date().toLocaleDateString(),uw:fmt(cum.uw),w:fmt(cum.w)});saveLocal();renderHistory();showToast('Progress saved ✦')});
+document.getElementById('btnReset').addEventListener('click',()=>{if(!confirm('Reset all courses?'))return;state.markingPeriods=[{id:uid(),name:'MP1',courses:emptyRows()}];state.activeMP=0;state.scoir={uw:'',w:'',credits:'',date:''};saveLocal();renderAll();showToast('Reset complete')});
+document.getElementById('btnProject').addEventListener('click',()=>{state.scoir.uw=document.getElementById('scoirUW').value;state.scoir.w=document.getElementById('scoirW').value;state.scoir.credits=document.getElementById('scoirCredits').value;state.scoir.date=document.getElementById('scoirDate').value;saveLocal();renderCGPATab();showToast('Projection updated ✦')});
+document.getElementById('btnExport').addEventListener('click',()=>{
+  const cum=calcCumGPA();let out=`ATLAS GPA — CSW Export\n${'─'.repeat(38)}\nSchool: ${state.school}\nCumulative UW GPA: ${fmt(cum.uw)}\nCumulative W GPA:  ${fmt(cum.w)}\nTotal Credits: ${cum.credits} | Courses: ${cum.count}\n\n`;
+  state.markingPeriods.forEach(mp=>{const sr=calcMPGPA(mp.courses);out+=`── ${mp.name} ──\n  GPA: ${fmt(sr.uw)} UW / ${fmt(sr.w)} W  (${sr.credits} credits)\n`;mp.courses.filter(c=>c.name||c.grade).forEach(c=>{const pts=gradeToPoints(c.grade);out+=`  ${(c.name||'Unnamed').padEnd(28)} ${(c.grade||'—').padEnd(5)} ${(PHASE_LABELS[c.phase]||'—').padEnd(22)} ${pts!==null?pts.toFixed(1):'—'}\n`});out+='\n'});
+  if(state.scoir.uw)out+=`Scoir Snapshot\n  UW CGPA: ${state.scoir.uw} | W CGPA: ${state.scoir.w||'—'} | Credits: ${state.scoir.credits||'—'}\n`;
+  out+=`Generated: ${new Date().toLocaleString()}`;
+  document.getElementById('exportBox').textContent=out;document.getElementById('exportModal').classList.add('open');
+});
+document.getElementById('exportClose').addEventListener('click',()=>document.getElementById('exportModal').classList.remove('open'));
+document.getElementById('exportModal').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open')});
+document.getElementById('btnCopyExport').addEventListener('click',()=>navigator.clipboard.writeText(document.getElementById('exportBox').textContent).then(()=>showToast('Copied to clipboard ✦')));
+
+const STORE='atlas-gpa-csw-v3';
+function saveLocal(){try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}}
+function loadLocal(){try{const r=localStorage.getItem(STORE);if(r){const s=JSON.parse(r);Object.assign(state,s)}}catch(e){}}
+let toastTimer;
+function showToast(msg){const t=document.getElementById('toast');document.getElementById('toastMsg').textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2600)}
+
+loadLocal();
+if(!state.markingPeriods)state.markingPeriods=[{id:uid(),name:'MP1',courses:emptyRows()}];
+if(state.activeMP===undefined)state.activeMP=0;
+if(state.scoir){
+  if(state.scoir.uw)document.getElementById('scoirUW').value=state.scoir.uw;
+  if(state.scoir.w)document.getElementById('scoirW').value=state.scoir.w;
+  if(state.scoir.credits)document.getElementById('scoirCredits').value=state.scoir.credits;
+  if(state.scoir.date)document.getElementById('scoirDate').value=state.scoir.date;
+}
+document.getElementById('schoolDisplay').textContent=state.school;
+renderAll();
+</script>
+</body>
+</html>
