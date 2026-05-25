@@ -193,92 +193,83 @@ async function parseSchoologyPDF(pdfBuffer) {
   }
 
   for (const line of lines) {
-    if (line.length < 4) continue;
 
-    // ── Marking period row → extract school year dates (before SKIP_PATTERNS) ─
-    const mpMatch = line.match(MP_ROW);
+    // 1. Skip blank/very short lines
+    if (!line || line.trim().length < 4) continue;
+    const t = line.trim();
+
+    // 2. ALWAYS check MP date rows FIRST — before any other filter
+    const mpMatch = t.match(/^M([1-4]):\s+(\d{4})-\d{2}-\d{2}\s*-\s*(\d{4})-\d{2}-\d{2}/);
     if (mpMatch) {
-      const mpNum    = parseInt(mpMatch[1]);
-      const lineStart = mpMatch[2];
-      const lineEnd   = mpMatch[3];
-      if (mpNum === 1) mpStartYear = lineStart;
-      if (mpEndYear === null || lineEnd > mpEndYear) mpEndYear = lineEnd;
+      const lineStartYear = mpMatch[2];
+      const lineEndYear   = mpMatch[3];
+      if (mpMatch[1] === '1') mpStartYear = lineStartYear;
+      if (!mpEndYear || lineEndYear > mpEndYear) mpEndYear = lineEndYear;
       if (!schoolYear) schoolYear = deriveSchoolYear(mpStartYear, mpEndYear);
       continue;
     }
 
-    // ── Course Grade row → finalize current course (before SKIP_PATTERNS) ───
-    const cgMatch = line.match(COURSE_GRADE_ROW);
+    // 3. ALWAYS check Course Grade row SECOND — before any other filter
+    const cgMatch = t.match(/^Course\s+Grade\s+([\d.]+%?|N\/A|-)\s*$/i);
     if (cgMatch && currentCourse) {
-      const rawGrade = cgMatch[1].replace('%', '');
-      const finalGrade = rawGrade === 'N/A' || rawGrade === '-' ? 'N/A' : rawGrade;
-
+      const raw        = cgMatch[1].replace('%', '').trim();
+      const finalGrade = (raw === 'N/A' || raw === '-' || raw === '') ? 'N/A' : raw;
       const { excluded, reason } = isExcluded(currentCourse.name, excludeList);
-
       records.push({
-        canonicalName:    currentCourse.canonicalName,
-        originalName:     currentCourse.name,
-        courseId:         currentCourse.courseId || null,
-        phase:            currentCourse.phase || null,
-        credits:          currentCourse.credits,
-        grade:            finalGrade,
-        schoolYear:       deriveSchoolYear(mpStartYear, mpEndYear) || schoolYear,
-        excludedFromGPA:  excluded,
-        exclusionReason:  reason,
-        isNA:             finalGrade === 'N/A',
+        canonicalName:   currentCourse.canonicalName,
+        originalName:    currentCourse.name,
+        courseId:        currentCourse.courseId || null,
+        phase:           currentCourse.phase || null,
+        credits:         currentCourse.credits,
+        grade:           finalGrade,
+        schoolYear:      deriveSchoolYear(mpStartYear, mpEndYear) || schoolYear,
+        excludedFromGPA: excluded,
+        exclusionReason: reason,
+        isNA:            finalGrade === 'N/A',
       });
-
       currentCourse = null;
       continue;
     }
 
-    // Skip non-course lines after handling MP and Course Grade rows above
-    if (SKIP_PATTERNS.some(p => p.test(line))) continue;
+    // 4. NOW apply skip patterns for non-course lines
+    if (SKIP_PATTERNS.some(p => p.test(t))) continue;
 
-    // ── Try phased course header ─────────────────────────────────────────────
-    const phasedMatch = line.match(PHASED_HEADER);
+    // 5. Try phased course header: "4-ENGLISH 2 : 8204 1 4-ENGLISH 2"
+    const phasedMatch = t.match(/^([3-6])-([^:]+?)\s*:\s*(\S+)/);
     if (phasedMatch) {
-      const phase      = phasedMatch[1];
-      const rawName    = phasedMatch[2].trim();
-      const courseId   = phasedMatch[3];
-      const canonical  = canonicalizeName(rawName);
-
-      const credits = courseId && /^\d{4}$/.test(courseId) ? 1.0 : 1.0;
-
+      const phase     = phasedMatch[1];
+      const rawName   = phasedMatch[2].trim();
+      const courseId  = phasedMatch[3];
+      const canonical = canonicalizeName(rawName);
       currentCourse = {
         name:          rawName,
         canonicalName: canonical,
         phase,
         courseId:      /^\d{4}$/.test(courseId) ? courseId : null,
-        credits,
+        credits:       1.0,
       };
       continue;
     }
 
-    // ── Try non-phased course header ─────────────────────────────────────────
-    if (line.includes(':') && !line.match(/^\d+%$/) && !currentCourse) {
-      const npMatch = line.match(NONPHASED_HEADER);
+    // 6. Try non-phased course header: "DRIVER ED : DRIVER ED - B MP3"
+    if (t.includes(':') && !currentCourse) {
+      const npMatch = t.match(/^([A-Za-z][^:]{1,60}?)\s*:\s*(\S+)/);
       if (npMatch) {
         const rawName   = npMatch[1].trim();
         const sectionId = npMatch[2];
+        if (rawName.length < 3) continue;
+        if (/^(grades|course|student|school|parent|teacher|may |the |100 |https)/i.test(rawName)) continue;
         const canonical = canonicalizeName(rawName);
-
-        const looksLikeCourse = rawName.length > 2
-          && !/^(Grades|Course|Student|School|Parent|Teacher|May |The |100 )/.test(rawName);
-
-        if (looksLikeCourse) {
-          let credits = 1.0;
-          if (/driver/i.test(rawName)) credits = 0.25;
-          if (/drug|alcohol|homeroom|study hall/i.test(rawName)) credits = 0;
-
-          currentCourse = {
-            name:          rawName,
-            canonicalName: canonical,
-            phase:         null,
-            courseId:      /^\d{4}$/.test(sectionId) ? sectionId : null,
-            credits,
-          };
-        }
+        let credits = 1.0;
+        if (/driver/i.test(rawName))                          credits = 0.25;
+        if (/drug|alcohol|homeroom|study hall/i.test(rawName)) credits = 0;
+        currentCourse = {
+          name:          rawName,
+          canonicalName: canonical,
+          phase:         null,
+          courseId:      /^\d{4}$/.test(sectionId) ? sectionId : null,
+          credits,
+        };
       }
     }
   }

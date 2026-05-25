@@ -7,7 +7,7 @@
 
 const express = require('express');
 const router  = express.Router();
-const { calculateGPA, buildExcludeList } = require('../utils/gpaCalculator');
+const { calculateGPA, buildExcludeList, PHASE_BONUS_APPLIES_TO } = require('../utils/gpaCalculator');
 
 /**
  * Flatten input into flat course array.
@@ -27,6 +27,31 @@ function flattenInput(body) {
     );
   return body.courses || [];
 }
+
+router.get('/api/gpa/rules', (req, res) => {
+  res.json({
+    scale:               '4.0 unweighted',
+    phaseBonus:          { '3': 0, '4': 0.25, '5': 0.50, '6': 1.00 },
+    phaseBonusAppliesTo: 'Course Grade only — not to individual marking period grades, midterms, or finals',
+    phaseBonusNote:      PHASE_BONUS_APPLIES_TO,
+    noAPlus:             true,
+    noDPlusDMinus:       true,
+    excludedCourses:     ['Driver Education', 'Drug and Alcohol', 'Homeroom', 'Study Hall'],
+    gradingFormula:      'GPA = SUM(qualityPoints * credits) / SUM(credits)',
+    gradeScale: {
+      'A':  { range: '93-100', points: 4.0 },
+      'A-': { range: '90-92',  points: 3.7 },
+      'B+': { range: '87-89',  points: 3.3 },
+      'B':  { range: '83-86',  points: 3.0 },
+      'B-': { range: '80-82',  points: 2.7 },
+      'C+': { range: '77-79',  points: 2.3 },
+      'C':  { range: '73-76',  points: 2.0 },
+      'C-': { range: '70-72',  points: 1.7 },
+      'D':  { range: '66-69',  points: 1.0 },
+      'F':  { range: '0-65',   points: 0.0 },
+    },
+  });
+});
 
 router.post('/api/gpa/calculate', (req, res) => {
   try {
