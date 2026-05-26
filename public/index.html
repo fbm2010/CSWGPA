@@ -976,7 +976,7 @@ function renderRows(){
       <input class="inp-base" type="number" min=".25" max="4" step=".25" value="${esc(c.credits)}" data-field="credits" data-i="${i}" style="text-align:center"/>
       ${phaseArea}
       <button class="btn-remove" data-i="${i}" title="Remove">×</button>`;
-    row.querySelectorAll('[data-field]').forEach(el=>{el.addEventListener('input',handleInput);el.addEventListener('change',handleInput)});
+    row.querySelectorAll('[data-field]').forEach(el=>{el.addEventListener('input',handleInput);if(el.tagName==='SELECT')el.addEventListener('change',handleInput);});
     row.querySelector('.btn-remove').addEventListener('click',e=>{mp.courses.splice(parseInt(e.currentTarget.dataset.i),1);saveLocal();renderAll()});
     container.appendChild(row);
   });

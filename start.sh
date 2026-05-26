@@ -31,5 +31,22 @@ echo "  App:    $BASE_URL"
 echo "  Health: $BASE_URL/health"
 echo ""
 
+# ── Ollama health hint (non-blocking) ─────────────────────────────────────────
+OLLAMA_HOST="${OLLAMA_HOST:-http://127.0.0.1:11434}"
+OLLAMA_MODEL="${OLLAMA_MODEL:-qwen2.5:0.5b}"
+if curl -sf "${OLLAMA_HOST}/api/tags" > /dev/null 2>&1; then
+  MODEL_LIST=$(curl -sf "${OLLAMA_HOST}/api/tags" | grep -o '"name":"[^"]*"' | sed 's/"name":"//;s/"//' || true)
+  BASE_MODEL=$(echo "$OLLAMA_MODEL" | cut -d: -f1)
+  if echo "$MODEL_LIST" | grep -q "$BASE_MODEL"; then
+    echo "  Ollama: running  model=${OLLAMA_MODEL}"
+  else
+    echo "  Ollama: running  but ${OLLAMA_MODEL} not pulled — run: ollama pull ${OLLAMA_MODEL}"
+  fi
+else
+  echo "  Ollama: not running — PDF AI parsing will fall back to regex parser"
+  echo "          To enable: ollama serve &  ollama pull ${OLLAMA_MODEL}"
+fi
+echo ""
+
 # Start the server
 node src/index.js
