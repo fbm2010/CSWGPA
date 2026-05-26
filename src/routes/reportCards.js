@@ -2,7 +2,7 @@
  * ATLAS GPA — Report Card Import Routes
  *
  * GET  /api/ollama/status              → check if Ollama is running + model pulled
- * POST /api/reportcards/parse          → parse PDF (Ollama → regex fallback), no auth
+ * POST /api/reportcards/parse          → parse PDF (regex → LlamaParse fallback), no auth
  * POST /api/reportcards/upload         → parse PDF + save to DB (requires auth)
  * POST /api/reportcards/import/confirm → confirm pending import
  * POST /api/reportcards/import/manual  → submit manual grades
@@ -17,6 +17,7 @@ const crypto   = require('crypto');
 const router   = express.Router();
 
 const { parseWithOllama, checkOllamaAvailable } = require('../utils/ollamaParser');
+const { parseWithLlamaParse }                    = require('../utils/llamaParser');
 const { parseSchoologyPDF }                      = require('../utils/pdfParser');
 const { calculateGPA }                           = require('../utils/gpaCalculator');
 const { authenticateJWT }                        = require('../middleware/auth');
@@ -40,44 +41,26 @@ const upload = multer({
       : cb(new Error('Only PDF files accepted')),
 });
 
-// ── Shared parse logic: Ollama first, regex fallback ─────────────────────────
+// ── Shared parse logic: LlamaParse first, regex fallback ─────────────────────
 async function parsePDF(pdfBuffer) {
-  // Try Ollama
-  const ollamaResult = await parseWithOllama(pdfBuffer);
-  if (ollamaResult.usedOllama && ollamaResult.records.length > 0) {
-    return { ...ollamaResult, parseMethod: 'ollama' };
+  // LlamaParse first — cloud-based, no local CPU
+  const llamaResult = await parseWithLlamaParse(pdfBuffer);
+  if (llamaResult.usedLlamaParse && llamaResult.records.length > 0) {
+    return { ...llamaResult, parseMethod: 'llamaparse', usedOllama: false };
   }
 
-  // If Ollama is unavailable, try regex parser (silent fallback)
-  if (ollamaResult.ollamaUnavailable || !ollamaResult.usedOllama) {
-    const regexResult = await parseSchoologyPDF(pdfBuffer);
-    return {
-      ...regexResult,
-      parseMethod: 'regex',
-      usedOllama:  false,
-    };
-  }
-
-  // Ollama ran but found nothing — still try regex
+  // LlamaParse unavailable or found nothing — fall back to regex
   const regexResult = await parseSchoologyPDF(pdfBuffer);
   if (regexResult.records.length > 0) {
-    return {
-      ...regexResult,
-      parseMethod:    'regex',
-      usedOllama:     false,
-      parseWarnings:  [
-        ...(ollamaResult.parseWarnings || []),
-        ...(regexResult.parseWarnings  || []),
-      ],
-    };
+    return { ...regexResult, parseMethod: 'regex', usedOllama: false };
   }
 
-  // Both failed — return Ollama result with combined warnings
   return {
-    ...ollamaResult,
+    ...regexResult,
     parseMethod:   'none',
+    usedOllama:    false,
     parseWarnings: [
-      ...(ollamaResult.parseWarnings || []),
+      ...(llamaResult.parseWarnings  || []),
       ...(regexResult.parseWarnings  || []),
     ],
   };
