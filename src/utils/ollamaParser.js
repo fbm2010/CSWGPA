@@ -2,18 +2,28 @@
  * ATLAS GPA — Ollama-based report card parser
  *
  * Extracts raw text from a PDF with pdf-parse, then sends it to a local
- * Ollama instance (default: llama3.2) to extract structured course data.
+ * Ollama instance to extract structured course data.
  *
  * Falls back gracefully if Ollama is unavailable or returns bad JSON.
+ *
+ * Tuned for low-memory Codespaces (~8 GB RAM):
+ *   - num_ctx  4096  — fits full prompt (~950 tokens) + full JSON response
+ *   - num_predict 1200 — enough for 10-15 courses in pretty-printed JSON
+ *   - prompt capped at MAX_PROMPT_CHARS to stay inside the context window
+ *   - OLLAMA_TIMEOUT defaults to 45 s (not 90 s) so failures surface quickly
  */
 
 const pdfParse = require('pdf-parse');
 const http     = require('http');
 const https    = require('https');
 
-const OLLAMA_HOST    = process.env.OLLAMA_HOST  || 'http://127.0.0.1:11434';
-const OLLAMA_MODEL   = process.env.OLLAMA_MODEL || 'llama3.2';
-const OLLAMA_TIMEOUT = parseInt(process.env.OLLAMA_TIMEOUT || '90000');
+const OLLAMA_HOST     = process.env.OLLAMA_HOST     || 'http://127.0.0.1:11434';
+const OLLAMA_MODEL    = process.env.OLLAMA_MODEL    || 'qwen2.5:0.5b';
+const OLLAMA_TIMEOUT  = parseInt(process.env.OLLAMA_TIMEOUT  || '120000');
+const OLLAMA_NUM_CTX  = parseInt(process.env.OLLAMA_NUM_CTX  || '4096');
+const OLLAMA_NUM_PRED = parseInt(process.env.OLLAMA_NUM_PRED || '1200');
+// Hard cap on PDF text fed to the model — keeps the full prompt under num_ctx
+const MAX_PROMPT_CHARS = parseInt(process.env.OLLAMA_MAX_CHARS || '3000');
 
 // ── HTTP helper (avoids fetch/node-fetch version issues) ──────────────────────
 function httpPost(urlStr, body) {
@@ -69,14 +79,14 @@ function httpGet(urlStr) {
 async function checkOllamaAvailable() {
   try {
     const { status, body } = await httpGet(`${OLLAMA_HOST}/api/tags`);
-    if (status !== 200) return { available: false, hasModel: false, models: [] };
+    if (status !== 200) return { available: false, hasModel: false, models: [], configuredModel: OLLAMA_MODEL };
     const data   = JSON.parse(body);
     const models = (data.models || []).map(m => m.name);
     const base   = OLLAMA_MODEL.split(':')[0];
     const hasModel = models.some(m => m === OLLAMA_MODEL || m.startsWith(base + ':') || m === base);
-    return { available: true, hasModel, models };
-  } catch {
-    return { available: false, hasModel: false, models: [] };
+    return { available: true, hasModel, models, configuredModel: OLLAMA_MODEL };
+  } catch (err) {
+    return { available: false, hasModel: false, models: [], configuredModel: OLLAMA_MODEL, error: err.message };
   }
 }
 
@@ -147,25 +157,47 @@ async function parseWithOllama(pdfBuffer) {
     return { records: [], schoolYear: null, studentName: null, parseWarnings: warnings, usedOllama: false };
   }
 
-  // 3. Send to Ollama (trim text to ~7 000 chars to stay within 3B context)
-  const trimmed = rawText.length > 7000
-    ? rawText.slice(0, 7000) + '\n[...truncated for length]'
+  // 3. Send to Ollama — cap prompt to MAX_PROMPT_CHARS to stay within num_ctx
+  const trimmed = rawText.length > MAX_PROMPT_CHARS
+    ? rawText.slice(0, MAX_PROMPT_CHARS) + '\n[...truncated for memory safety]'
     : rawText;
+
+  const fullPrompt = SYSTEM_PROMPT + '\n\nReport card text:\n' + trimmed;
+  console.info(`[ollama] model=${modelToUse} ctx=${OLLAMA_NUM_CTX} predict=${OLLAMA_NUM_PRED} promptChars=${fullPrompt.length} timeout=${OLLAMA_TIMEOUT}ms`);
 
   let responseText = '';
   try {
     const raw = await httpPost(`${OLLAMA_HOST}/api/generate`, {
       model:   modelToUse,
-      prompt:  SYSTEM_PROMPT + '\n\nReport card text:\n' + trimmed,
+      prompt:  fullPrompt,
       stream:  false,
       format:  'json',
-      options: { temperature: 0, num_predict: 2048 },
+      options: {
+        temperature:  0,
+        num_ctx:      OLLAMA_NUM_CTX,
+        num_predict:  OLLAMA_NUM_PRED,
+        // Aggressive memory knobs for Codespaces
+        num_thread:   parseInt(process.env.OLLAMA_NUM_THREAD || '2'),
+        low_vram:     true,
+      },
     });
     const payload = JSON.parse(raw);
     responseText = payload.response || '';
+    if (payload.done_reason === 'length') {
+      warnings.push('AI response was cut off (hit token limit). Output may be incomplete — some courses may be missing.');
+    }
+    console.info(`[ollama] done=true eval_count=${payload.eval_count ?? '?'} total_duration=${payload.total_duration ?? '?'}`);
   } catch (err) {
-    warnings.push(`AI extraction failed: ${err.message}`);
-    return { records: [], schoolYear: null, studentName: null, parseWarnings: warnings, usedOllama: false, rawText };
+    const detail = err.message || String(err);
+    console.error(`[ollama] inference failed: ${detail}`);
+    warnings.push(`AI extraction failed: ${detail}`);
+    return {
+      records: [], schoolYear: null, studentName: null,
+      parseWarnings: warnings,
+      usedOllama: false,
+      rawText,
+      ollamaError: detail,
+    };
   }
 
   // 4. Parse JSON from model response

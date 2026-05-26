@@ -4,6 +4,7 @@
   "description": "ATLAS GPA Backend — CSW Schoology PDF import, Google OAuth, GPA calculation",
   "main": "src/index.js",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.98.0",
     "better-sqlite3": "^12.10.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
