@@ -17,7 +17,7 @@ const crypto   = require('crypto');
 const router   = express.Router();
 
 const { parseWithOllama, checkOllamaAvailable } = require('../utils/ollamaParser');
-const { parseWithLlamaParse }                    = require('../utils/llamaParser');
+const { parseWithLiteParse }                     = require('../utils/liteParser');
 const { parseSchoologyPDF }                      = require('../utils/pdfParser');
 const { calculateGPA }                           = require('../utils/gpaCalculator');
 const { authenticateJWT }                        = require('../middleware/auth');
@@ -41,15 +41,15 @@ const upload = multer({
       : cb(new Error('Only PDF files accepted')),
 });
 
-// ── Shared parse logic: LlamaParse first, regex fallback ─────────────────────
+// ── Shared parse logic: LiteParse first, regex fallback ──────────────────────
 async function parsePDF(pdfBuffer) {
-  // LlamaParse first — cloud-based, no local CPU
-  const llamaResult = await parseWithLlamaParse(pdfBuffer);
-  if (llamaResult.usedLlamaParse && llamaResult.records.length > 0) {
-    return { ...llamaResult, parseMethod: 'llamaparse', usedOllama: false };
+  // LiteParse first — local PDFium-based extraction, no cloud API, no CPU spike
+  const liteResult = await parseWithLiteParse(pdfBuffer);
+  if (liteResult.usedLiteParse && liteResult.records.length > 0) {
+    return { ...liteResult, parseMethod: 'liteparse', usedOllama: false };
   }
 
-  // LlamaParse unavailable or found nothing — fall back to regex
+  // LiteParse found nothing — fall back to pdf-parse + regex
   const regexResult = await parseSchoologyPDF(pdfBuffer);
   if (regexResult.records.length > 0) {
     return { ...regexResult, parseMethod: 'regex', usedOllama: false };
@@ -60,8 +60,8 @@ async function parsePDF(pdfBuffer) {
     parseMethod:   'none',
     usedOllama:    false,
     parseWarnings: [
-      ...(llamaResult.parseWarnings  || []),
-      ...(regexResult.parseWarnings  || []),
+      ...(liteResult.parseWarnings  || []),
+      ...(regexResult.parseWarnings || []),
     ],
   };
 }

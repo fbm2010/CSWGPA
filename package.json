@@ -5,6 +5,7 @@
   "main": "src/index.js",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.0",
+    "@llamaindex/liteparse": "^2.0.0",
     "better-sqlite3": "^12.10.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
