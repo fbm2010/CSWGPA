@@ -244,11 +244,12 @@ async function parseWithOllama(pdfBuffer) {
     if (seen.has(key)) continue;
     seen.add(key);
 
-    const gradeRaw = String(c.grade ?? '').replace('%', '').trim();
-    const isNA     = !gradeRaw || gradeRaw.toLowerCase() === 'n/a' || gradeRaw === 'null';
-    const credits  = Math.max(0, parseFloat(c.credits) || 1.0);
-    const phase    = String(c.phase ?? 'none').trim();
-    const excluded = isCourseExcluded(name);
+    const gradeRaw      = String(c.grade ?? '').replace('%', '').trim();
+    const isNA          = !gradeRaw || gradeRaw.toLowerCase() === 'n/a' || gradeRaw === 'null';
+    const parsedCredits = parseFloat(c.credits);
+    const credits       = Math.max(0, Number.isNaN(parsedCredits) ? 1.0 : parsedCredits);
+    const phase         = String(c.phase ?? 'none').trim();
+    const excluded      = isCourseExcluded(name);
 
     records.push({
       canonicalName:   name,

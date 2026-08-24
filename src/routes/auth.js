@@ -114,18 +114,22 @@ router.get('/auth/google', (req, res, next) => {
   if (!process.env.GOOGLE_OAUTH_CLIENT_ID) {
     return res.redirect('/?auth_error=google_disabled');
   }
-  passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+  passport.authenticate('google', { scope: ['profile', 'email'], state: true })(req, res, next);
 });
 
-router.get('/auth/google/callback',
-  passport.authenticate('google', { session: false, failureRedirect: '/?auth_error=1' }),
+router.get('/auth/google/callback', (req, res, next) => {
+  if (!process.env.GOOGLE_OAUTH_CLIENT_ID) {
+    return res.redirect('/?auth_error=google_disabled');
+  }
+  passport.authenticate('google', { session: false, failureRedirect: '/?auth_error=1', state: true })(req, res, next);
+},
   (req, res) => {
     try {
       const token = issueJWT(req.user);
       const frontendBase = process.env.FRONTEND_URL || '';
-      // If FRONTEND_URL is same origin as backend (localhost:3000), use relative redirect
-      const redirectBase = (frontendBase && frontendBase !== 'http://localhost:3000')
-        ? frontendBase : '';
+      const backendBase  = `http://localhost:${process.env.PORT || 3000}`;
+      // If FRONTEND_URL is same origin as the backend, use a relative redirect
+      const redirectBase = (frontendBase && frontendBase !== backendBase) ? frontendBase : '';
       res.redirect(`${redirectBase}/?token=${token}`);
     } catch (err) {
       console.error('[auth/callback]', err.message);
@@ -161,8 +165,11 @@ router.put('/api/user/import_method', authenticateJWT, (req, res) => {
 });
 
 router.get('/auth/logout', (req, res) => {
-  req.logout?.();
-  res.json({ success: true });
+  if (typeof req.logout !== 'function') return res.json({ success: true });
+  req.logout(err => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true });
+  });
 });
 
 module.exports = { router, passport };

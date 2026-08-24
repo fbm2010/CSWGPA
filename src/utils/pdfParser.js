@@ -3,8 +3,22 @@
  * Tuned to actual CSW Schoology grade export format.
  */
 
+const path = require('path');
 const pdfParse = require('pdf-parse');
 const { buildExcludeList, isExcluded } = require('./gpaCalculator');
+
+const CATALOG_PATH = path.join(__dirname, '../../data/courses_catalog.json');
+let _catalogCreditsByName = null;
+function catalogCredits(canonicalName) {
+  if (!_catalogCreditsByName) {
+    _catalogCreditsByName = new Map();
+    try {
+      const catalog = require(CATALOG_PATH);
+      catalog.forEach(c => _catalogCreditsByName.set(c.canonical_name.toLowerCase(), c.credits));
+    } catch { /* catalog is optional — fall back to name-pattern heuristics */ }
+  }
+  return _catalogCreditsByName.get((canonicalName || '').toLowerCase());
+}
 
 // ── Regexes calibrated to CSW Schoology PDF ──────────────────────────────────
 
@@ -25,8 +39,10 @@ const SKIP_PATTERNS = [
   /^Teacher['']s Signature/i,
   /^Student ID:/i,
   /^The Charter School/i,
-  /^100 N DuPont/i,
+  /^Charter Sch/i,
+  /^100 N\.?\s*DuPont/i,
   /^Wilmington/i,
+  /^\(\d{3}\)\d{3}-?\d{4}/,
   /^May \d+/i,
   /^June \d+/i,
   /^csw\.schoology\.com/i,
@@ -47,6 +63,17 @@ const SKIP_PATTERNS = [
   /^[A-F][+-]?\s*$/,
   /^N\/A\s*$/i,
   /^-\s*$/,
+  // Marking Period Report Card cover page / attendance / comment lines
+  /^Counselor:/i,
+  /^Homeroom Teacher:/i,
+  /^Generated on/i,
+  /^\d+(st|nd|rd|th)\s+Honors\b/i,
+  /^Attendance Summary/i,
+  /^Absent\s+Tardy\s*$/i,
+  /^Grade Report:/i,
+  /^Course Task/i,
+  /^Grade:\s*\d/i,
+  /^Term \d+ Comments:/i,
 ];
 
 const CANONICAL_OVERRIDES = {
@@ -90,7 +117,10 @@ const CANONICAL_OVERRIDES = {
 function canonicalizeName(raw) {
   const upper = raw.toUpperCase().trim();
   if (CANONICAL_OVERRIDES[upper]) return CANONICAL_OVERRIDES[upper];
-  return raw.trim().replace(/\b\w/g, c => c.toUpperCase()).replace(/\s+/g, ' ');
+  // Course headers in the PDF are ALL CAPS, so lowercase first — otherwise
+  // \b\w only recases the already-uppercase word-initial letter and the
+  // rest of the word is left shouting (e.g. "FINANCIAL LITERACY" unchanged).
+  return raw.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase()).replace(/\s+/g, ' ');
 }
 
 function deriveSchoolYear(startYear, endYear) {
@@ -99,7 +129,9 @@ function deriveSchoolYear(startYear, endYear) {
   return startYear;
 }
 
-function assignCredits(rawName) {
+function assignCredits(rawName, canonicalName) {
+  const fromCatalog = catalogCredits(canonicalName);
+  if (fromCatalog !== undefined) return fromCatalog;
   const n = rawName.toLowerCase();
   if (/drug|alcohol|homeroom|study.?hall|math.?lab/i.test(n)) return 0;
   if (/driver/i.test(n))                                       return 0.25;
@@ -124,8 +156,32 @@ function parseSchoologyText(rawText) {
   let mpEndYear           = null;
   let awaitingCourseGrade = false;
 
+  function finishCurrentCourse(grade = 'N/A') {
+    if (!currentCourse) return;
+
+    const finalGrade = (grade === 'N/A' || grade === '-' || grade === '') ? 'N/A' : grade;
+    const { excluded, reason } = isExcluded(currentCourse.name, excludeList);
+    records.push({
+      canonicalName:   currentCourse.canonicalName,
+      originalName:    currentCourse.name,
+      courseId:        currentCourse.courseId || null,
+      phase:           currentCourse.phase || null,
+      credits:         currentCourse.credits,
+      grade:           finalGrade,
+      schoolYear:      deriveSchoolYear(mpStartYear, mpEndYear) || schoolYear,
+      excludedFromGPA: excluded,
+      exclusionReason: reason,
+      isNA:            finalGrade === 'N/A',
+    });
+    currentCourse = null;
+    awaitingCourseGrade = false;
+  }
+
   for (let i = 0; i < Math.min(lines.length, 15); i++) {
-    if (/^[A-Z][a-z]+,\s+[A-Z]/.test(lines[i])) {
+    // Require a lowercase-following first name (not just an initial) so
+    // "City, ST 12345" address lines (e.g. "Wilmington, DE 19807") don't
+    // get mistaken for "Last, First" — state abbreviations are all-caps.
+    if (/^[A-Z][a-z]+,\s+[A-Z][a-z]/.test(lines[i])) {
       studentName = lines[i];
       break;
     }
@@ -145,6 +201,15 @@ function parseSchoologyText(rawText) {
       continue;
     }
 
+    // 1b. Marking Period Report Card cover title: "2025 - 2026 1st Marking Period Report Card"
+    const titleYearMatch = t.match(/^(\d{4})\s*-\s*(\d{4})\s+\S.*Marking Period Report Card/i);
+    if (titleYearMatch) {
+      mpStartYear = titleYearMatch[1];
+      mpEndYear   = titleYearMatch[2];
+      if (!schoolYear) schoolYear = deriveSchoolYear(mpStartYear, mpEndYear);
+      continue;
+    }
+
     // 2a. "Course Grade" alone on its own line
     if (COURSE_GRADE_STANDALONE.test(t)) {
       if (currentCourse) awaitingCourseGrade = true;
@@ -155,23 +220,7 @@ function parseSchoologyText(rawText) {
     if (awaitingCourseGrade && currentCourse) {
       const gradeMatch = t.match(BARE_GRADE);
       if (gradeMatch) {
-        awaitingCourseGrade = false;
-        const raw        = gradeMatch[1].replace('%', '').trim();
-        const finalGrade = (raw === 'N/A' || raw === '-' || raw === '') ? 'N/A' : raw;
-        const { excluded, reason } = isExcluded(currentCourse.name, excludeList);
-        records.push({
-          canonicalName:   currentCourse.canonicalName,
-          originalName:    currentCourse.name,
-          courseId:        currentCourse.courseId || null,
-          phase:           currentCourse.phase || null,
-          credits:         currentCourse.credits,
-          grade:           finalGrade,
-          schoolYear:      deriveSchoolYear(mpStartYear, mpEndYear) || schoolYear,
-          excludedFromGPA: excluded,
-          exclusionReason: reason,
-          isNA:            finalGrade === 'N/A',
-        });
-        currentCourse = null;
+        finishCurrentCourse(gradeMatch[1].replace('%', '').trim());
         continue;
       }
       awaitingCourseGrade = false;
@@ -180,46 +229,54 @@ function parseSchoologyText(rawText) {
     // 2c. Inline "Course Grade 92%"
     const cgInline = t.match(COURSE_GRADE_INLINE);
     if (cgInline && currentCourse) {
-      const raw        = cgInline[1].replace('%', '').trim();
-      const finalGrade = (raw === 'N/A' || raw === '-' || raw === '') ? 'N/A' : raw;
-      const { excluded, reason } = isExcluded(currentCourse.name, excludeList);
-      records.push({
-        canonicalName:   currentCourse.canonicalName,
-        originalName:    currentCourse.name,
-        courseId:        currentCourse.courseId || null,
-        phase:           currentCourse.phase || null,
-        credits:         currentCourse.credits,
-        grade:           finalGrade,
-        schoolYear:      deriveSchoolYear(mpStartYear, mpEndYear) || schoolYear,
-        excludedFromGPA: excluded,
-        exclusionReason: reason,
-        isNA:            finalGrade === 'N/A',
-      });
-      currentCourse = null;
+      finishCurrentCourse(cgInline[1].replace('%', '').trim());
       continue;
     }
 
     // 3. Skip non-course lines
     if (SKIP_PATTERNS.some(p => p.test(t))) continue;
 
+    // 3.5 Marking Period Report Card course row (interim/progress report format):
+    // "4526-2 6-AP COMP SCI PRINCIPLES [Raab, Jonas] Marking Period 99"
+    const mpRowMatch = t.match(
+      /^(\d{3,6})-\d+\s+([3-6])-(.+?)\s+\[[^\]]+\]\s*Marking Period\s*([\d.]+%?|N\/A|-)\s*$/i
+    );
+    if (mpRowMatch) {
+      finishCurrentCourse();
+      const [, courseId, phase, rawNameRaw, gradeRaw] = mpRowMatch;
+      const rawName   = rawNameRaw.trim();
+      const canonical = canonicalizeName(rawName);
+      currentCourse = {
+        name:          rawName,
+        canonicalName: canonical,
+        phase,
+        courseId,
+        credits:       assignCredits(rawName, canonical),
+      };
+      finishCurrentCourse(gradeRaw.replace('%', '').trim());
+      continue;
+    }
+
     // 4. Phased course header: "5-BIOLOGY : 7205 2 …"
     const phasedMatch = t.match(/^([3-6])-([^:]+?)\s*:\s*(\S+)/);
     if (phasedMatch) {
+      finishCurrentCourse();
       const rawName  = phasedMatch[2].trim();
       const firstTok = phasedMatch[3];
+      const canonical = canonicalizeName(rawName);
       currentCourse = {
         name:          rawName,
-        canonicalName: canonicalizeName(rawName),
+        canonicalName: canonical,
         phase:         phasedMatch[1],
         courseId:      /^\d{4}$/.test(firstTok) ? firstTok : null,
-        credits:       assignCredits(rawName),
+        credits:       assignCredits(rawName, canonical),
       };
       awaitingCourseGrade = false;
       continue;
     }
 
     // 5. Non-phased course header: "DRIVER ED : DRIVER ED - B MP3"
-    if (t.includes(':') && !currentCourse) {
+    if (t.includes(':')) {
       const npMatch = t.match(/^([A-Za-z][^:]{1,60}?)\s*:\s*(\S+)/);
       if (npMatch) {
         const rawName   = npMatch[1].trim();
@@ -227,17 +284,27 @@ function parseSchoologyText(rawText) {
         if (rawName.length < 3) continue;
         if (/^(grades|course|student|school|parent|teacher|may |june |the |100 |https|year|final|quarter|semester|marking|period)/i.test(rawName)) continue;
         if (/^\d{1,2}[\/\-]\d{1,2}/.test(rawName)) continue;
+        // Assignment titles also contain colons. Non-phased course headers in
+        // this report format use a numeric/Section_* id, except for the known
+        // special schedule courses whose section labels repeat their names.
+        const knownSpecialCourse = /^(driver(?:s)? ed|drug and alcohol|homeroom|study hall)\b/i.test(rawName);
+        if (!/^\d{4}$/.test(sectionId) && !/^Section_/i.test(sectionId) && !knownSpecialCourse) continue;
+        finishCurrentCourse();
+        const canonical = canonicalizeName(rawName);
         currentCourse = {
           name:          rawName,
-          canonicalName: canonicalizeName(rawName),
+          canonicalName: canonical,
           phase:         null,
           courseId:      /^\d{4}$/.test(sectionId) ? sectionId : null,
-          credits:       assignCredits(rawName),
+          credits:       assignCredits(rawName, canonical),
         };
         awaitingCourseGrade = false;
       }
     }
   }
+
+  // A schedule entry can legitimately have no reported course grade yet.
+  finishCurrentCourse();
 
   const seen   = new Set();
   const deduped = records.filter(r => {

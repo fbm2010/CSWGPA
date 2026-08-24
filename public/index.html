@@ -1473,49 +1473,27 @@ document.getElementById('courseRows').addEventListener('keydown',e=>{
 });
 
 // ── PDF IMPORT ──────────────────────────────────────────────────────────
+// The active parse pipeline (see reportCards.js) tries Unstructured (local)
+// first, then falls back to the local regex parser — it never calls Ollama.
+// The badge below reflects that real pipeline via pdfData.parseMethod
+// once a parse completes; before that we show a neutral placeholder.
 const pdfInput=document.getElementById('pdfFileInput');
 const pdfModal=document.getElementById('pdfModal');
 let pdfData=null;
-let ollamaAvailable=null; // cached after first check
-
-// Poll Ollama status and update the badge
-async function refreshOllamaStatus(){
-  try{
-    const res=await fetch('/api/ollama/status');
-    const s=await res.json();
-    ollamaAvailable=s.available&&s.hasModel;
-    const badge=document.getElementById('ollamaStatusBadge');
-    if(!badge)return;
-    if(s.available&&s.hasModel){
-      badge.textContent='AI ready';
-      badge.style.color='var(--green)';badge.style.borderColor='rgba(77,201,148,.4)';badge.style.background='rgba(77,201,148,.06)';
-    }else if(s.available&&!s.hasModel){
-      badge.textContent='Ollama — model not pulled';
-      badge.style.color='var(--amber)';badge.style.borderColor='rgba(201,147,58,.4)';badge.style.background='rgba(201,147,58,.06)';
-    }else{
-      badge.textContent='Basic parser';
-      badge.style.color='var(--muted)';badge.style.borderColor='rgba(74,180,255,.2)';badge.style.background='rgba(74,180,255,.04)';
-    }
-  }catch{
-    const badge=document.getElementById('ollamaStatusBadge');
-    if(badge){badge.textContent='Basic parser';badge.style.color='var(--muted)';}
-    ollamaAvailable=false;
-  }
-}
-// Check on load (non-blocking)
-refreshOllamaStatus();
 
 document.getElementById('btnImportPDF').addEventListener('click',()=>{
-  refreshOllamaStatus(); // refresh before opening
+  const badge=document.getElementById('ollamaStatusBadge');
+  if(badge){
+    badge.textContent='Ready to parse';
+    badge.style.color='var(--muted)';badge.style.borderColor='rgba(74,180,255,.2)';badge.style.background='rgba(74,180,255,.04)';
+  }
   pdfInput.click();
 });
 
-function pdfLoadingHTML(usingAI){
-  const label=usingAI?'AI reading your report card…':'Parsing document…';
-  const sub=usingAI?'<div style="font-size:11px;color:var(--faint);margin-top:4px">llama3.2 extracting courses</div>':'';
+function pdfLoadingHTML(){
   return '<div style="text-align:center;padding:2.5rem;color:var(--muted);font-size:13px;display:flex;flex-direction:column;align-items:center;gap:10px">'+
     '<svg width="28" height="28" viewBox="0 0 28 28" fill="none" style="animation:spin 1s linear infinite"><circle cx="14" cy="14" r="11" stroke="rgba(74,180,255,.2)" stroke-width="2"/><path d="M14 3a11 11 0 0111 11" stroke="#4AB4FF" stroke-width="2" stroke-linecap="round"/></svg>'+
-    `<span>${label}</span>${sub}</div>`;
+    '<span>Parsing document…</span></div>';
 }
 
 pdfInput.addEventListener('change',async()=>{
@@ -1524,7 +1502,7 @@ pdfInput.addEventListener('change',async()=>{
   if(!file)return;
   if(file.size>10*1024*1024){showToast('PDF too large (max 10 MB)');return;}
 
-  document.getElementById('pdfPreviewContent').innerHTML=pdfLoadingHTML(ollamaAvailable);
+  document.getElementById('pdfPreviewContent').innerHTML=pdfLoadingHTML();
   document.getElementById('btnConfirmImport').disabled=true;
   document.getElementById('btnConfirmImport').classList.add('btn-loading');
   pdfModal.classList.add('open');
@@ -1548,8 +1526,8 @@ pdfInput.addEventListener('change',async()=>{
     // Update badge to show which engine actually ran
     const badge=document.getElementById('ollamaStatusBadge');
     if(badge&&pdfData.parseMethod){
-      if(pdfData.parseMethod==='ollama'){
-        badge.textContent=`AI · ${pdfData.modelUsed||'llama3.2'}`;
+      if(pdfData.parseMethod==='unstructured'){
+        badge.textContent='Unstructured · Local';
         badge.style.color='var(--green)';badge.style.borderColor='rgba(77,201,148,.4)';badge.style.background='rgba(77,201,148,.06)';
       }else if(pdfData.parseMethod==='regex'){
         badge.textContent='Basic parser (fallback)';
@@ -1558,14 +1536,10 @@ pdfInput.addEventListener('change',async()=>{
     }
     const hasRecords=(pdfData.records||[]).filter(r=>!r.isNA).length>0;
     if(!hasRecords){
-      const ollamaMsg=pdfData.parseMethod==='none'&&pdfData.parseWarnings?.some(w=>w.includes('Ollama'))
-        ?'<div style="margin-top:.6rem;font-size:11px;color:var(--faint)">Start Ollama and pull llama3.2 for AI-powered extraction:<br><code style="color:var(--cyan)">ollama pull llama3.2</code></div>'
-        :'';
       document.getElementById('pdfPreviewContent').innerHTML=
         `<div style="padding:1.5rem;text-align:center">
           <div style="color:var(--amber);font-size:13px;margin-bottom:.6rem">⚠ No course data found in this document.</div>
           <div style="font-size:11.5px;color:var(--muted);line-height:1.6">Close this dialog and add your courses manually in the GPA Calculator tab.</div>
-          ${ollamaMsg}
           ${(pdfData.parseWarnings||[]).length?`<div style="margin-top:.8rem;font-size:11px;color:var(--amber)">${pdfData.parseWarnings.map(w=>`⚠ ${esc(w)}`).join('<br>')}</div>`:''}
         </div>`;
       document.getElementById('btnConfirmImport').disabled=true;
@@ -1593,8 +1567,8 @@ function renderPDFPreview(data){
   const naRecords=(data.records||[]).filter(r=>r.isNA);
   const pc=data.gpaPreview;
   const phaseStyle=p=>p==='6'?'color:var(--amber)':p==='5'?'color:var(--purple)':p==='4'?'color:var(--cyan)':'color:var(--muted)';
-  const engineNote=data.usedOllama
-    ?`<div style="font-size:10px;color:var(--green);margin-bottom:.5rem">✦ Extracted by AI (${esc(data.modelUsed||'llama3.2')})</div>`
+  const engineNote=data.parseMethod==='unstructured'
+    ?`<div style="font-size:10px;color:var(--green);margin-bottom:.5rem">✦ Extracted locally by Unstructured</div>`
     :`<div style="font-size:10px;color:var(--muted);margin-bottom:.5rem">Extracted by pattern parser</div>`;
   document.getElementById('pdfPreviewContent').innerHTML=`
     ${engineNote}

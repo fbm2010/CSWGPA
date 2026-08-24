@@ -107,9 +107,12 @@ function gradeToPoints(grade) {
   // Numeric grade (CSW uses percentages like 91%, 92, 98.48)
   const num = parseFloat(str);
   if (!isNaN(num)) {
-    const row = CSW_SCALE.find(r => num >= r.min && num <= r.max);
+    // CSW_SCALE is ordered highest→lowest with contiguous min thresholds
+    // (F's min is 0), so the first row the score meets or exceeds is
+    // correct even for decimal percentages that fall between the
+    // integer bin boundaries (e.g. 72.5, 86.5, 92.5).
+    const row = CSW_SCALE.find(r => num >= r.min);
     if (row) return { points: row.points, isPassFail: false, letter: row.letter };
-    if (num > 100) return { points: 4.0, isPassFail: false, letter: 'A' };
     return { points: 0.0, isPassFail: false, letter: 'F' };
   }
 

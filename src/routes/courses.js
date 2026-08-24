@@ -46,8 +46,12 @@ function fmt(item) {
 }
 
 router.get('/api/courses/autocomplete', (req, res) => {
-  const q     = (req.query.q || '').trim();
-  const limit = Math.min(parseInt(req.query.limit || process.env.AUTOCOMPLETE_LIMIT || '10'), 25);
+  const q      = (req.query.q || '').trim();
+  const parsed = parseInt(req.query.limit, 10);
+  const limit  = Math.min(
+    Number.isFinite(parsed) && parsed > 0 ? parsed : (parseInt(process.env.AUTOCOMPLETE_LIMIT, 10) || 10),
+    25
+  );
   if (q.length < 2) return res.json({ results: [], query: q });
   const results = getFuse().search(q, { limit }).map(({ item }) => fmt(item));
   res.json({ results, query: q });

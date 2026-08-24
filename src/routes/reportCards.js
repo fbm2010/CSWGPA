@@ -2,7 +2,7 @@
  * ATLAS GPA — Report Card Import Routes
  *
  * GET  /api/ollama/status              → check if Ollama is running + model pulled
- * POST /api/reportcards/parse          → parse PDF (regex → LlamaParse fallback), no auth
+ * POST /api/reportcards/parse          → parse PDF (Unstructured → regex fallback), no auth
  * POST /api/reportcards/upload         → parse PDF + save to DB (requires auth)
  * POST /api/reportcards/import/confirm → confirm pending import
  * POST /api/reportcards/import/manual  → submit manual grades
@@ -16,8 +16,8 @@ const path     = require('path');
 const crypto   = require('crypto');
 const router   = express.Router();
 
-const { parseWithOllama, checkOllamaAvailable } = require('../utils/ollamaParser');
-const { parseWithLlamaParse }                    = require('../utils/llamaParser');
+const { checkOllamaAvailable }                   = require('../utils/ollamaParser');
+const { parseWithUnstructured }                  = require('../utils/unstructuredParser');
 const { parseSchoologyPDF }                      = require('../utils/pdfParser');
 const { calculateGPA }                           = require('../utils/gpaCalculator');
 const { authenticateJWT }                        = require('../middleware/auth');
@@ -41,16 +41,34 @@ const upload = multer({
       : cb(new Error('Only PDF files accepted')),
 });
 
-// ── Shared parse logic: LlamaParse first, regex fallback ─────────────────────
+// Shared parse logic: Unstructured first, regex fallback.
 async function parsePDF(pdfBuffer) {
-  // LlamaParse first — cloud-based, no local CPU
-  const llamaResult = await parseWithLlamaParse(pdfBuffer);
-  if (llamaResult.usedLlamaParse && llamaResult.records.length > 0) {
-    return { ...llamaResult, parseMethod: 'llamaparse', usedOllama: false };
+  // Run both local extraction views. Complex PDF layouts can give either
+  // engine a partial reading order, so prefer the one that recovered more of
+  // the schedule instead of accepting a non-empty but incomplete result.
+  const [unstructuredResult, regexResult] = await Promise.all([
+    parseWithUnstructured(pdfBuffer),
+    parseSchoologyPDF(pdfBuffer),
+  ]);
+
+  const unstructuredGraded = unstructuredResult.records.filter(record => !record.isNA).length;
+  const regexGraded = regexResult.records.filter(record => !record.isNA).length;
+  console.info(
+    `[reportcards] parse candidates: unstructured=${unstructuredGraded}/${unstructuredResult.records.length} graded, ` +
+    `regex=${regexGraded}/${regexResult.records.length} graded`,
+  );
+
+  if (
+    regexGraded > unstructuredGraded ||
+    (regexGraded === unstructuredGraded && regexResult.records.length > unstructuredResult.records.length)
+  ) {
+    return { ...regexResult, parseMethod: 'regex', usedOllama: false };
   }
 
-  // LlamaParse unavailable or found nothing — fall back to regex
-  const regexResult = await parseSchoologyPDF(pdfBuffer);
+  if (unstructuredResult.usedUnstructured && unstructuredResult.records.length > 0) {
+    return { ...unstructuredResult, parseMethod: 'unstructured', usedOllama: false };
+  }
+
   if (regexResult.records.length > 0) {
     return { ...regexResult, parseMethod: 'regex', usedOllama: false };
   }
@@ -60,7 +78,7 @@ async function parsePDF(pdfBuffer) {
     parseMethod:   'none',
     usedOllama:    false,
     parseWarnings: [
-      ...(llamaResult.parseWarnings  || []),
+      ...(unstructuredResult.parseWarnings || []),
       ...(regexResult.parseWarnings  || []),
     ],
   };
@@ -158,6 +176,7 @@ router.post('/api/reportcards/upload', authenticateJWT, upload.single('pdf'), as
     });
   } catch (err) {
     console.error('[reportcards/upload]', err.message);
+    if (req.file) fs.unlink(req.file.path, () => {});
     res.status(500).json({ error: 'PDF processing failed', detail: err.message });
   }
 });
@@ -168,7 +187,7 @@ router.post('/api/reportcards/import/confirm', authenticateJWT, (req, res) => {
   if (!previewId) return res.status(400).json({ error: 'previewId required' });
   const db = getDb();
   const pending = db.prepare(
-    'SELECT * FROM reportcard_imports WHERE id=? AND user_id=? AND status="pending"'
+    "SELECT * FROM reportcard_imports WHERE id=? AND user_id=? AND status='pending'"
   ).get(previewId, req.userId);
   if (!pending) return res.status(404).json({ error: 'Pending import not found' });
 
